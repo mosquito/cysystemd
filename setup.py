@@ -13,6 +13,15 @@ try:
             libraries=['systemd'],
             extra_compile_args=['-DCYTHON_TRACE=1']
         ),
+        Extension(
+            "systemd.journal",
+            ["systemd/journal.pyx"],
+            libraries=['systemd',],
+            extra_compile_args=[
+                '-DCYTHON_TRACE=1',
+                '-DSYSLOG_NAMES=1',
+            ]
+        ),
     ], force=True, emit_linenums=True)
 
 except ImportError:
@@ -22,6 +31,15 @@ except ImportError:
             ["systemd/daemon.c"],
             libraries=['systemd'],
             extra_compile_args=['-DCYTHON_TRACE=1']
+        ),
+        Extension(
+            "systemd.journal",
+            ["systemd/journal.c"],
+            libraries=['systemd',],
+            extra_compile_args=[
+                '-DCYTHON_TRACE=1',
+                '-DSYSLOG_NAMES=1',
+            ]
         ),
     ]
 
