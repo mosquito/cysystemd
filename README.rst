@@ -28,3 +28,24 @@ Write message into Systemd journal
     from systemd import journal
 
     journal.write("Hello Lennart")
+
+
+
+Or add logging handler to python logger
+
+.. code-block:: python
+
+    import logging
+    import uuid
+
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger()
+    logger.addHandler(JournaldLogHandler())
+
+    try:
+        log.info("Trying to do something")
+        raise Exception('foo')
+    except:
+        logger.exception("Test Exception %s", 1)
+
+
