@@ -27,7 +27,15 @@ Write message into Systemd journal
 
     from systemd import journal
 
+
     journal.write("Hello Lennart")
+
+    # Or send structured data
+    journal.send(
+        message="Hello Lennart",
+        priority=journal.Priority.INFO,
+        some_field='some value',
+    )
 
 
 
@@ -35,12 +43,13 @@ Or add logging handler to python logger
 
 .. code-block:: python
 
+    from systemd import journal
     import logging
     import uuid
 
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger()
-    logger.addHandler(JournaldLogHandler())
+    logger.addHandler(journal.JournaldLogHandler())
 
     try:
         log.info("Trying to do something")
