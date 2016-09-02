@@ -61,10 +61,12 @@ def notify(notification: Notification, value: int=None, unset_environment: bool=
 
     result = sd_notify(unset_env, line)
 
-    if not result:
+    if result == 0:
+        log.error("Data could not be sent")
+    elif result > 0:
         return
-
-    log.error("Notification error #%d", result)
+    else:
+        log.error("Notification error #%d", result)
 
 
 __all__ = ('notify', 'Notification')
