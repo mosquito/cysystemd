@@ -3,6 +3,40 @@ SystemD
 
 Python systemd wrapper using Cython
 
+
+Installation
+------------
+
+You should install systemd headers 
+
+For debian users:
+
+
+.. code-block:: bash
+
+    apt-get install build-essential \
+        libsystemd-journal-dev \
+        libsystemd-daemon-dev \
+        libsystemd-dev
+
+
+For CentOS/RHEL
+
+.. code-block:: bash
+
+    yum install gcc systemd-devel
+
+
+And install it from pypi
+
+.. code-block:: bash
+
+    pip install systemd
+
+
+Usage examples
+--------------
+
 Systemd daemon notification
 
 
