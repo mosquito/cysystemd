@@ -1,7 +1,6 @@
 import uuid
 import logging
 import traceback
-from copy import copy
 from enum import IntEnum, unique
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy
@@ -202,7 +201,7 @@ class JournaldLogHandler(logging.Handler):
             )
         ).hex
 
-        data = copy(record.__dict__)
+        data = {key: value for key, value in record.__dict__.items() if not key.startswith("_") and value}
         data['priority'] = self.LEVELS[data.pop('levelno')]
         data['syslog_facility'] = self.__facility
         data['code_file'] = data.pop('filename')
