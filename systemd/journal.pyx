@@ -219,7 +219,7 @@ class JournaldLogHandler(logging.Handler):
         data['relative_ts'] = to_microsecond(data.pop('relativeCreated'))
         data['thread_name'] = data.pop('threadName')
 
-        for idx, item in enumerate(data.pop('args')):
+        for idx, item in enumerate(data.pop('args', [])):
             data['argument_%d' % idx] = str(item)
 
         if tb_message:
