@@ -1,6 +1,7 @@
 import uuid
 import logging
 import traceback
+from copy import copy
 from enum import IntEnum, unique
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy
@@ -201,30 +202,29 @@ class JournaldLogHandler(logging.Handler):
             )
         ).hex
 
-        data = {
-            "priority": self.LEVELS[record.levelno],
-            "syslog_facility": self.__facility,
-            "code_file": record.filename,
-            "code_line": record.lineno,
-            "code_func": record.funcName,
-            "syslog_identifier": record.name,
-            "message": message,
-            "message_id": message_id,
-            "code_module": record.module,
-            "logger_name": record.name,
-            "pid": record.process,
-            "proccess_name": record.processName,
-            "errno": 0 if not record.exc_info else 255,
-            "relative_ts": to_microsecond(record.relativeCreated),
-            "thread": record.thread,
-            "thread_name": record.threadName
-        }
+        data = copy(record.__dict__)
+        data['priority'] = self.LEVELS[data.pop('levelno')]
+        data['syslog_facility'] = self.__facility
+        data['code_file'] = data.pop('filename')
+        data['code_line'] = data.pop('lineno')
+        data['code_func'] = data.pop('funcName')
+        data['syslog_identifier'] = data['name']
+        data['message'] = message
+        data['message_raw'] = data.pop('msg')
+        data['message_id'] = message_id
+        data['code_module'] = data.pop('module')
+        data['logger_name'] = data.pop('name')
+        data['pid'] = data.pop('process')
+        data['proccess_name'] = data.pop('processName')
+        data['errno'] = 0 if not record.exc_info else 255
+        data['relative_ts'] = to_microsecond(data.pop('relativeCreated'))
+        data['thread_name'] = data.pop('threadName')
+
+        for idx, item in enumerate(data.pop('args')):
+            data['argument_%d' % idx] = str(item)
 
         if tb_message:
             data["traceback"] = tb_message
-
-        for idx, item in enumerate(record.args):
-            data['argument_%d' % idx] = str(item)
 
         send(**data)
 
