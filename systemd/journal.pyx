@@ -204,12 +204,16 @@ class JournaldLogHandler(logging.Handler):
         data = {key: value for key, value in record.__dict__.items() if not key.startswith("_") and value}
         data['priority'] = self.LEVELS[data.pop('levelno')]
         data['syslog_facility'] = self.__facility
+
         data['code_file'] = data.pop('filename')
         data['code_line'] = data.pop('lineno')
         data['code_func'] = data.pop('funcName')
         data['syslog_identifier'] = data['name']
         data['message'] = message
-        data['message_raw'] = data.pop('msg')
+        
+        if 'msg' in data:
+            data['message_raw'] = data.pop('msg')
+        
         data['message_id'] = message_id
         data['code_module'] = data.pop('module')
         data['logger_name'] = data.pop('name')
