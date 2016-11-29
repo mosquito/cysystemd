@@ -1,7 +1,7 @@
 import logging
 from enum import Enum, unique
 from collections import namedtuple
-from _daemon import notify as sd_notify
+from ._daemon import sd_notify
 
 
 log = logging.getLogger('systemd.daemon')

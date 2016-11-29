@@ -2,7 +2,7 @@ import uuid
 import logging
 import traceback
 from enum import IntEnum, unique
-from _journal import syslog_priorities, send
+from ._journal import syslog_priorities, send
 
 
 _priorities = syslog_priorities()
