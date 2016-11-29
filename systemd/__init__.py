@@ -1,5 +1,5 @@
 package_info = "Python systemd wrapper"
-version_info = (0, 9, 5)
+version_info = (0, 9, '6dev')
 
 
 author_info = (
@@ -10,8 +10,7 @@ author_email = ", ".join("{}".format(info[1]) for info in author_info)
 
 license = "Apache"
 
-
-__version__ = ".".join(map(str, version_info))
+__version__ = ".".join(str(x) for x in version_info)
 __author__ = ", ".join("{} <{}>".format(*info) for info in author_info)
 
 

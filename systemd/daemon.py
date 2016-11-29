@@ -1,13 +1,10 @@
 import logging
 from enum import Enum, unique
 from collections import namedtuple
+from _daemon import notify as sd_notify
 
 
 log = logging.getLogger('systemd.daemon')
-
-
-cdef extern from "<systemd/sd-daemon.h>" nogil:
-    int sd_notify(int unset_environment, const char *state)
 
 
 NotificationValue = namedtuple("NotificationValue", ("name", "constant", "type"))
@@ -44,7 +41,8 @@ def notify(notification: Notification, value: int=None, unset_environment: bool=
 
     if state.constant is not None and value:
         raise ValueError(
-            "State %s should contain only constant value %r" % (state.name, state.constant)
+            "State %s should contain only constant value %r" % (state.name, state.constant),
+            state.name, state.constant
         )
 
     line = "%s=%s" % (
@@ -52,21 +50,12 @@ def notify(notification: Notification, value: int=None, unset_environment: bool=
         state.constant if state.constant is not None else state.type(value)
     )
 
-    line = line.encode()
-
-    cdef int unset_env
-    unset_env = 2 if unset_environment else 0
-
     log.debug("Send %r into systemd", line)
 
-    result = sd_notify(unset_env, line)
-
-    if result == 0:
-        log.error("Data could not be sent")
-    elif result > 0:
-        return
-    else:
-        log.error("Notification error #%d", result)
+    try:
+        return sd_notify(line, unset_environment)
+    except Exception as e:
+        log.error("%s", e)
 
 
 __all__ = ('notify', 'Notification')

@@ -3,22 +3,21 @@
 import systemd as module
 from setuptools import setup, Extension
 
+
 try:
     from Cython.Build import cythonize
 
     extensions = cythonize([
         Extension(
-            "systemd.daemon",
-            ["systemd/daemon.pyx"],
+            "systemd._daemon",
+            ["systemd/_daemon.pyx"],
             libraries=['systemd'],
-            extra_compile_args=['-DCYTHON_TRACE=1']
         ),
         Extension(
-            "systemd.journal",
-            ["systemd/journal.pyx"],
+            "systemd._journal",
+            ["systemd/_journal.pyx"],
             libraries=['systemd',],
             extra_compile_args=[
-                '-DCYTHON_TRACE=1',
                 '-DSYSLOG_NAMES=1',
             ]
         ),
@@ -27,17 +26,15 @@ try:
 except ImportError:
     extensions = [
         Extension(
-            "systemd.daemon",
-            ["systemd/daemon.c"],
+            "systemd._daemon",
+            ["systemd/_daemon.c"],
             libraries=['systemd'],
-            extra_compile_args=['-DCYTHON_TRACE=1']
         ),
         Extension(
-            "systemd.journal",
-            ["systemd/journal.c"],
+            "systemd._journal",
+            ["systemd/_journal.c"],
             libraries=['systemd',],
             extra_compile_args=[
-                '-DCYTHON_TRACE=1',
                 '-DSYSLOG_NAMES=1',
             ]
         ),
