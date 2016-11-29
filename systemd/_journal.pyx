@@ -71,7 +71,7 @@ def send(**kwargs):
 
         items.append((key, value))
 
-    send_message(dict(items))
+    return send_message(dict(items))
 
 
 __all__ = 'send', 'Priority', 'Facility'
