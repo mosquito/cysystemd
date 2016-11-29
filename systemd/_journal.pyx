@@ -42,8 +42,7 @@ cdef send_message(dict kwargs):
             vec[idx].iov_base = cstring_list[idx]
             vec[idx].iov_len = len(msg) - 1
 
-        sd_journal_sendv(vec, count)
-
+        return sd_journal_sendv(vec, count)
     finally:
         for i in range(count):
             free(cstring_list[i])
