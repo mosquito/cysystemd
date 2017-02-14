@@ -134,3 +134,14 @@ class JournaldLogHandler(logging.Handler):
 
         send(**data)
 
+
+handler = JournaldLogHandler()
+
+
+class JournaldLogger(logging.Logger):
+    def __init__(self, level, name='root'):
+        super(JournaldLogger, self).__init__(name, level)
+        self.addHandler(handler)
+
+
+Logger = JournaldLogger(logging.WARNING)
