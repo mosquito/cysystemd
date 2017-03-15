@@ -102,7 +102,7 @@ class JournaldLogHandler(logging.Handler):
 
         message_id = uuid.uuid3(uuid.NAMESPACE_OID, "$".join(str(x) for x in hash_fields)).hex
 
-        data = {key: value for key, value in record.__dict__.items() if not key.startswith("_") and value}
+        data = {key: value for key, value in record.__dict__.items() if not key.startswith("_") and value is not None}
         data['priority'] = self.LEVELS[data.pop('levelno')]
         data['syslog_facility'] = self.__facility
 
