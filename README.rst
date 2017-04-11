@@ -1,14 +1,6 @@
 SystemD for Python
 ==================
 
-.. image:: https://coveralls.io/repos/github/mosquito/systemd/badge.svg?branch=master
-    :target: https://coveralls.io/github/mosquito/systemd
-    :alt: Coveralls
-
-.. image:: https://travis-ci.org/mosquito/systemd.svg
-    :target: https://travis-ci.org/mosquito/systemd
-    :alt: Travis CI
-
 .. image:: https://img.shields.io/pypi/v/systemd.svg
     :target: https://pypi.python.org/pypi/systemd/
     :alt: Latest Version
