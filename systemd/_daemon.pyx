@@ -1,13 +1,14 @@
 cimport sd_daemon
 
 
-def sd_notify(line: str, unset_environment: bool=False) -> int:
+def sd_notify(line, unset_environment=False):
     """ Send notification to systemd daemon
 
-    :type notification: Notification
-    :param notification: Notification instance
-    :param value: str or int value for non constant notifications
-    :returns None
+    :type line: str
+    :type: unset_environment: bool
+    :return: int
+    :raises RuntimeError: When c-call returns zero 
+    :raises ValueError: Otherwise
     """
 
     line = line.encode()
@@ -15,7 +16,7 @@ def sd_notify(line: str, unset_environment: bool=False) -> int:
     cdef int unset_env
     unset_env = 2 if unset_environment else 0
 
-    result = sd_daemon.sd_notify(unset_env, line)
+    result = sd_daemon.sd_notify(unset_env, line.encode())
 
     if result > 0:
         return result

@@ -1,7 +1,14 @@
 #!/usr/bin/env python
 # encoding: utf-8
+import sys
 import systemd as module
 from setuptools import setup, Extension
+
+
+requires = []
+
+if sys.version_info < (3, 4):
+    requires += ['enum34']
 
 
 try:
@@ -70,7 +77,8 @@ setup(
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Cython',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
@@ -79,4 +87,5 @@ setup(
         'Topic :: System',
         'Topic :: System :: Operating System',
     ],
+    install_requires=requires,
 )

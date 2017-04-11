@@ -25,11 +25,12 @@ class Notification(Enum):
     WATCHDOG_USEC = NotificationValue(name='WATCHDOG_USEC', constant=None, type=int)
 
 
-def notify(notification: Notification, value: int=None, unset_environment: bool=False):
+def notify(notification, value=None, unset_environment=False):
     """ Send notification to systemd daemon
 
     :type notification: Notification
-    :param notification: Notification instance
+    :type value: int
+    :type unset_environment: bool 
     :param value: str or int value for non constant notifications
     :returns None
     """

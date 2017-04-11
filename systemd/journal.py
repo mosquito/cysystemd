@@ -52,8 +52,11 @@ class Facility(IntEnum):
     LOCAL7 = 23
 
 
-def write(message: str, priority: Priority=Priority.INFO):
-    """ Write message into systemd journal """
+def write(message, priority=Priority.INFO):
+    """ Write message into systemd journal 
+    :type priority: Priority
+    :type message: str
+    """
 
     priority = int(Priority(int(priority)))
 
@@ -74,12 +77,20 @@ class JournaldLogHandler(logging.Handler):
 
     __slots__ = '__facility',
 
-    def __init__(self, facility: Facility=Facility.DAEMON):
+    def __init__(self, facility=Facility.DAEMON):
+        """
+
+        :type facility: Facility
+        """
         logging.Handler.__init__(self)
         self.__facility = Facility(int(facility))
 
     @staticmethod
-    def _to_microsecond(ts: float):
+    def _to_microsecond(ts):
+        """
+
+        :type ts: float
+        """
         return int(ts * 1000 * 1000)
 
     def emit(self, record):
