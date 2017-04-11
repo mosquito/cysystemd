@@ -1,5 +1,27 @@
-SystemD
-=======
+SystemD for Python
+==================
+
+.. image:: https://coveralls.io/repos/github/mosquito/systemd/badge.svg?branch=master
+    :target: https://coveralls.io/github/mosquito/systemd
+    :alt: Coveralls
+
+.. image:: https://travis-ci.org/mosquito/systemd.svg
+    :target: https://travis-ci.org/mosquito/systemd
+    :alt: Travis CI
+
+.. image:: https://img.shields.io/pypi/v/systemd.svg
+    :target: https://pypi.python.org/pypi/systemd/
+    :alt: Latest Version
+
+.. image:: https://img.shields.io/pypi/wheel/systemd.svg
+    :target: https://pypi.python.org/pypi/systemd/
+
+.. image:: https://img.shields.io/pypi/pyversions/systemd.svg
+    :target: https://pypi.python.org/pypi/systemd/
+
+.. image:: https://img.shields.io/pypi/l/systemd.svg
+    :target: https://pypi.python.org/pypi/systemd/
+
 
 Python systemd wrapper using Cython
 
