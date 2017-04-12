@@ -7,7 +7,7 @@ def sd_notify(line, unset_environment=False):
     :type line: str
     :type: unset_environment: bool
     :return: int
-    :raises RuntimeError: When c-call returns zero 
+    :raises RuntimeError: When c-call returns zero
     :raises ValueError: Otherwise
     """
 
@@ -16,7 +16,7 @@ def sd_notify(line, unset_environment=False):
     cdef int unset_env
     unset_env = 2 if unset_environment else 0
 
-    result = sd_daemon.sd_notify(unset_env, line.encode())
+    result = sd_daemon.sd_notify(unset_env, line)
 
     if result > 0:
         return result
