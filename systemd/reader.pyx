@@ -1,35 +1,9 @@
 from libc.stdlib cimport malloc, free
-from libc.stddef cimport size_t
-from libc.stdint cimport uint64_t, uint8_t
 from cpython cimport dict
 
+from sd_journal cimport *
+from libc.stdint cimport uint64_t, uint8_t
 from sd_id128 cimport sd_id128_t
-from sd_journal cimport (
-    SD_JOURNAL_LOCAL_ONLY,
-    SD_JOURNAL_RUNTIME_ONLY,
-    SD_JOURNAL_SYSTEM,
-    SD_JOURNAL_CURRENT_USER,
-    SD_JOURNAL_SYSTEM_ONLY,
-    sd_journal,
-    sd_journal_close,
-    sd_journal_enumerate_data,
-    sd_journal_get_cursor,
-    sd_journal_get_data_threshold,
-    sd_journal_get_monotonic_usec,
-    sd_journal_get_realtime_usec,
-    sd_journal_next,
-    sd_journal_open,
-    sd_journal_open_directory,
-    sd_journal_open_files,
-    sd_journal_restart_data,
-    sd_journal_seek_cursor,
-    sd_journal_seek_head,
-    sd_journal_seek_monotonic_usec,
-    sd_journal_seek_realtime_usec,
-    sd_journal_seek_tail,
-    sd_journal_set_data_threshold,
-    sd_journal_wait,
-)
 
 import os
 from datetime import datetime
@@ -38,11 +12,58 @@ from contextlib import contextmanager
 from errno import errorcode
 from enum import IntEnum
 from dictproxyhack import dictproxy
+from string import ascii_letters
 
 
-cdef check_error_code(int code):
+cdef enum MATHCER_OPERATION:
+    MATHCER_OPERATION_AND,
+    MATHCER_OPERATION_OR,
+
+
+cdef class Matcher:
+    cdef list chain
+
+    def __init__(self):
+        self.chain = []
+
+    def and_(self, str key, str value):
+        self.chain.append((MATHCER_OPERATION_AND, Operation(key, value)))
+        return self
+
+    def or_(self, str key, str value):
+        self.chain.append((MATHCER_OPERATION_OR, Operation(key, value)))
+        return self
+
+    def __repr__(self):
+        return "Matcher({0!r})".format(self.chain)
+
+
+cdef class Operation:
+    cdef bytes __expression
+
+    def __repr__(self):
+        return "%r" % self.expression.decode()
+
+    def __cinit__(self, str key, str value):
+        if key[0] not in ascii_letters:
+            raise ValueError("Key must be start from ascii-letter")
+
+        cdef str exp = "=".join((key.upper(), value))
+        cdef bytes bexp
+
+        if '\0' in exp:
+            raise ValueError("Expression must not contain \ 0 character")
+
+        self.__expression = exp.encode()
+
+    @property
+    def expression(self):
+        return self.__expression
+
+
+def check_error_code(int code):
     if code >= 0:
-        return
+        return code
 
     code = -code
 
@@ -121,7 +142,7 @@ cdef class JournalEntry:
     cdef object _data
     cdef object __date
 
-    def __cinit__(self, Reader reader):
+    def __cinit__(self, JournalReader reader):
         cdef const void *data
         cdef size_t length
 
@@ -180,7 +201,7 @@ cdef class JournalEntry:
         return "<JournalEntry: %r>" % self.date
 
 
-cdef class Reader:
+cdef class JournalReader:
     cdef sd_journal* context
     cdef char state
     cdef object flags
@@ -219,13 +240,23 @@ cdef class Reader:
     @property
     def data_threshold(self):
         cdef size_t result
-        check_error_code(sd_journal_get_data_threshold(self.context, &result))
+        cdef int rcode
+
+        with nogil:
+            rcode = sd_journal_get_data_threshold(self.context, &result)
+
+        check_error_code(rcode)
         return result
 
     @data_threshold.setter
     def data_threshold(self, size):
         cdef size_t sz = size
-        check_error_code(sd_journal_set_data_threshold(self.context, sz))
+        cdef int result
+
+        with nogil:
+            result = sd_journal_set_data_threshold(self.context, sz)
+
+        check_error_code(result)
 
     @property
     def closed(self):
@@ -249,50 +280,148 @@ cdef class Reader:
             raise RuntimeError("Can't reopen opened reader")
 
         self.state = READER_LOCKED
+
         try:
             yield
         finally:
             self.state = READER_OPENED
 
-    cpdef seek_head(self):
-        check_error_code(sd_journal_seek_head(self.context))
+    def seek_head(self):
+        cdef int result
+
+        with nogil:
+            result = sd_journal_seek_head(self.context)
+
+        check_error_code(result)
+
         return True
 
-    cpdef seek_tail(self):
-        check_error_code(sd_journal_seek_tail(self.context))
+    def seek_tail(self):
+        cdef int result
+
+        with nogil:
+            result = sd_journal_seek_tail(self.context)
+
+        check_error_code(result)
         return True
 
-    cpdef seek_monotonic_usec(self, boot_id: UUID, uint64_t usec):
+    def seek_monotonic_usec(self, boot_id: UUID, uint64_t usec):
         cdef sd_id128_t cboot_id
+        cdef int result
+
         cboot_id.bytes = boot_id.bytes
-        check_error_code(sd_journal_seek_monotonic_usec(self.context, cboot_id, usec))
+        with nogil:
+            result = sd_journal_seek_monotonic_usec(self.context, cboot_id, usec)
+
+        check_error_code(result)
         return True
 
-    cpdef seek_realtime_usec(self, uint64_t usec):
+    def seek_realtime_usec(self, uint64_t usec):
         cdef uint64_t cusec = usec
-        check_error_code(sd_journal_seek_realtime_usec(self.context, cusec))
+        cdef int result
+
+        with nogil:
+            result = sd_journal_seek_realtime_usec(self.context, cusec)
+
+        check_error_code(result)
         return True
 
-
-    cpdef seek_cursor(self, bytes cursor):
+    def seek_cursor(self, bytes cursor):
         cdef char* ccursor = cursor
-        check_error_code(sd_journal_seek_cursor(self.context, ccursor))
+        cdef int result
+
+        with nogil:
+            result = sd_journal_seek_cursor(self.context, ccursor)
+
+        check_error_code(result)
         return True
 
     cpdef wait(self, uint8_t timeout):
         cdef uint64_t timeout_usec = timeout * 1000000
-        check_error_code(sd_journal_wait(self.context, timeout_usec))
+        cdef int result
+
+        with nogil:
+            result = sd_journal_wait(self.context, timeout_usec)
+
+        check_error_code(result)
 
     def __iter__(self):
-        return self.iter()
+        return self
 
-    cpdef iter(self):
-        with self._lock():
-            while sd_journal_next(self.context) > 0:
-                yield JournalEntry(self)
+    def __next__(self):
+        result = self.next()
+        if result is None:
+            raise StopIteration
+        return result
+
+    def next(self):
+        cdef int result
+
+        with nogil:
+            result = sd_journal_next(self.context)
+
+        check_error_code(result)
+
+        if result > 0:
+            return JournalEntry(self)
+        else:
+            return None
+
+    def skip_next(self, uint64_t skip):
+        cdef int result
+
+        with nogil:
+            result = sd_journal_next_skip(self.context, skip)
+
+        check_error_code(result)
+
+    def previous(self, uint64_t skip=0):
+        cdef int result
+
+        with nogil:
+            if skip:
+                result = sd_journal_previous_skip(self.context, skip)
+            else:
+                result = sd_journal_previous(self.context)
+
+
+        check_error_code(result)
+
+        if skip:
+            return None
+
+        if result > 0:
+            return JournalEntry(self)
+        else:
+            return None
+
+    def skip_previous(self, uint64_t skip):
+        cdef int result
+
+        with nogil:
+            result = sd_journal_previous_skip(self.context, skip)
+
+        check_error_code(result)
+
+    def add_filter(self, Matcher matcher):
+        cdef int result
+        cdef char* exp
+
+        for operation_code, operation in matcher.chain:
+            exp = operation.expression
+
+            if operation_code == MATHCER_OPERATION_OR:
+                result = sd_journal_add_disjunction(self.context)
+                check_error_code(result)
+            result = sd_journal_add_match(self.context, exp, 0)
+            check_error_code(result)
+
+    def clear_filter(self):
+        with nogil:
+            sd_journal_flush_matches(self.context)
 
     def __repr__(self):
-        return "<Reader[%s]: %s>" % (self.mode.name, 'closed' if self.is_closed else 'opened')
+        return "<Reader[%s]: %s>" % (self.flags.name, 'closed' if self.closed else 'opened')
 
     def __dealloc__(self):
         sd_journal_close(self.context)
