@@ -15,6 +15,15 @@ from dictproxyhack import dictproxy
 from string import ascii_letters
 
 
+cdef extern from "<poll.h>":
+    cdef const int POLLIN
+    cdef const int POLLOUT
+
+
+EV_POLLIN = POLLIN
+EV_POLLOUT = POLLOUT
+
+
 cdef enum MATHCER_OPERATION:
     MATHCER_OPERATION_AND,
     MATHCER_OPERATION_OR,
@@ -421,7 +430,73 @@ cdef class JournalReader:
             sd_journal_flush_matches(self.context)
 
     def __repr__(self):
-        return "<Reader[%s]: %s>" % (self.flags.name, 'closed' if self.closed else 'opened')
+        return "<Reader[%s]: %s>" % (self.mode.name, 'closed' if self.is_closed else 'opened')
 
     def __dealloc__(self):
         sd_journal_close(self.context)
+
+    @property
+    def fd(self):
+        cdef int result
+
+        with nogil:
+            result = sd_journal_get_fd(self.context)
+
+        return check_error_code(result)
+
+    @property
+    def events(self):
+        cdef int result
+
+        with nogil:
+            result = sd_journal_get_events(self.context)
+
+        return check_error_code(result)
+
+    @property
+    def timeout(self):
+        cdef int result
+        cdef uint64_t timeout
+
+        with nogil:
+            result = sd_journal_get_timeout(self.context, &timeout)
+
+        check_error_code(result)
+        return timeout
+
+    def process_events(self):
+        cdef int result
+
+        with nogil:
+            result = sd_journal_process(self.context)
+
+        check_error_code(result)
+
+    def get_catalog(self):
+        cdef int result
+        cdef char* catalog
+        cdef bytes bcatalog
+
+        with nogil:
+            result = sd_journal_get_catalog(self.context, &catalog)
+
+        length = check_error_code(result)
+        bcatalog = catalog[:length]
+
+        return bcatalog
+
+    def get_catalog_for_message_id(self, message_id):
+        cdef int result
+        cdef char* catalog
+        cdef bytes bcatalog
+        cdef sd_id128_t id128
+
+        id128.bytes = message_id.bytes
+
+        with nogil:
+            result = sd_journal_get_catalog_for_message_id(id128, &catalog)
+
+        length = check_error_code(result)
+        bcatalog = catalog[:length]
+
+        return bcatalog

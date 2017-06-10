@@ -1,5 +1,5 @@
 package_info = "Python systemd wrapper"
-version_info = (0, 9, 15)
+version_info = (0, 9, 16)
 
 
 author_info = (
