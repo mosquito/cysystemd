@@ -3,11 +3,11 @@ from libc.string cimport memcpy
 from sd_journal cimport sd_journal_sendv, prioritynames, CODE, iovec
 
 
-cdef dict get_priorities():
+cpdef dict syslog_priorities():
     result = {}
 
     cdef CODE item
-    cdef items = sizeof(prioritynames) / sizeof(CODE)
+    cdef int items = sizeof(prioritynames) / sizeof(CODE)
 
     for i in range(items):
         item = prioritynames[i]
@@ -20,15 +20,29 @@ cdef dict get_priorities():
     return result
 
 
-cdef send_message(dict kwargs):
-    items = list(kwargs.items())
+cdef _send(kwargs):
+    cdef list items = list()
 
-    cdef int count = len(items)
+    for key, value in kwargs.items():
+        key = key.upper().strip()
+        # The variable name must be in uppercase and consist only of characters,
+        # numbers and underscores, and may not begin with an underscore.
+
+        if key.startswith('_'):
+            raise ValueError('Key name may not begin with an underscore')
+        elif not key.replace("_", '').isalnum():
+            raise ValueError('Key name must be consist only of characters, numbers and underscores')
+
+        items.append((key, value))
+
+    cdef unsigned int count = len(items)
     cdef iovec* vec = <iovec *>malloc(count * sizeof(iovec))
     cdef void** cstring_list = <void **>malloc(count * sizeof(void*))
 
     if not vec or not cstring_list:
         raise MemoryError()
+
+    cdef int result
 
     try:
         for idx, item in enumerate(items):
@@ -42,7 +56,10 @@ cdef send_message(dict kwargs):
             vec[idx].iov_base = cstring_list[idx]
             vec[idx].iov_len = len(msg) - 1
 
-        return sd_journal_sendv(vec, count)
+        with nogil:
+             result = sd_journal_sendv(vec, count)
+
+        return result
     finally:
         for i in range(count):
             free(cstring_list[i])
@@ -51,27 +68,9 @@ cdef send_message(dict kwargs):
         free(vec)
 
 
-def syslog_priorities():
-    return get_priorities()
-
-
 def send(**kwargs):
     """ Send structued message into systemd journal """
-    items = list()
-
-    for key, value in kwargs.items():
-        key = key.upper().strip()
-        # The variable name must be in uppercase and consist only of characters, numbers and underscores, and may not
-        # begin with an underscore.
-
-        if key.startswith('_'):
-            raise ValueError('Key name may not begin with an underscore')
-        elif not key.replace("_", '').isalnum():
-            raise ValueError('Key name must be consist only of characters, numbers and underscores')
-
-        items.append((key, value))
-
-    return send_message(dict(items))
+    return _send(kwargs)
 
 
 __all__ = 'send', 'Priority', 'Facility'

@@ -5,7 +5,9 @@ import systemd as module
 from setuptools import setup, Extension
 
 
-requires = []
+requires = [
+    'dictproxyhack',
+]
 
 if sys.version_info < (3, 4):
     requires += ['enum34']
@@ -23,7 +25,15 @@ try:
         Extension(
             "systemd._journal",
             ["systemd/_journal.pyx"],
-            libraries=['systemd',],
+            libraries=['systemd'],
+            extra_compile_args=[
+                '-DSYSLOG_NAMES=1',
+            ]
+        ),
+        Extension(
+            "systemd.reader",
+            ["systemd/reader.pyx"],
+            libraries=['systemd'],
             extra_compile_args=[
                 '-DSYSLOG_NAMES=1',
             ]
@@ -40,7 +50,15 @@ except ImportError:
         Extension(
             "systemd._journal",
             ["systemd/_journal.c"],
-            libraries=['systemd',],
+            libraries=['systemd'],
+            extra_compile_args=[
+                '-DSYSLOG_NAMES=1',
+            ]
+        ),
+        Extension(
+            "systemd.reader",
+            ["systemd/reader.c"],
+            libraries=['systemd'],
             extra_compile_args=[
                 '-DSYSLOG_NAMES=1',
             ]

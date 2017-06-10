@@ -1,7 +1,7 @@
 cimport sd_daemon
 
 
-def sd_notify(line, unset_environment=False):
+cpdef sd_notify(str line, unset_environment=False):
     """ Send notification to systemd daemon
 
     :type line: str
@@ -11,12 +11,13 @@ def sd_notify(line, unset_environment=False):
     :raises ValueError: Otherwise
     """
 
-    line = line.encode()
+    cdef bytes bline = line.encode()
+    cdef char* cline = bline
+    cdef int unset_env, result
+    cdef char cunset_env = 2 if unset_environment else 0
 
-    cdef int unset_env
-    unset_env = 2 if unset_environment else 0
-
-    result = sd_daemon.sd_notify(unset_env, line)
+    with nogil:
+        result = sd_daemon.sd_notify(cunset_env, cline)
 
     if result > 0:
         return result
