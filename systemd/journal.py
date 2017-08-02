@@ -77,12 +77,14 @@ class JournaldLogHandler(logging.Handler):
 
     __slots__ = '__facility',
 
-    def __init__(self, facility=Facility.DAEMON):
+    def __init__(self, identifier=None, facility=Facility.DAEMON):
         """
 
+        :type identifier: Override default journald identifier
         :type facility: Facility
         """
         logging.Handler.__init__(self)
+        self.__identifier = identifier
         self.__facility = Facility(int(facility))
 
     @staticmethod
@@ -114,14 +116,17 @@ class JournaldLogHandler(logging.Handler):
         message_id = uuid.uuid3(uuid.NAMESPACE_OID, "$".join(str(x) for x in hash_fields)).hex
 
         data = {key: value for key, value in record.__dict__.items() if not key.startswith("_") and value is not None}
+        data['message'] = self.format(record)
         data['priority'] = self.LEVELS[data.pop('levelno')]
         data['syslog_facility'] = self.__facility
 
         data['code_file'] = data.pop('filename')
         data['code_line'] = data.pop('lineno')
         data['code_func'] = data.pop('funcName')
-        data['syslog_identifier'] = data['name']
-        data['message'] = message
+        if self.__identifier:
+            data['syslog_identifier'] = self.__identifier
+        else:
+            data['syslog_identifier'] = data['name']
 
         if 'msg' in data:
             data['message_raw'] = data.pop('msg')
