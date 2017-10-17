@@ -1,3 +1,5 @@
+#cython: unraisable_tracebacks=True
+
 from libc.stdlib cimport malloc, free
 from cpython cimport dict
 
@@ -172,7 +174,7 @@ cdef class JournalEntry:
             key, value = value.split("=", 1)
 
             if key in self.__data:
-                if not isinstance(self._data[key], list):
+                if not isinstance(self.__data[key], list):
                     self.__data[key] = [self.__data[key]]
                 self.__data[key].append(value)
             else:
@@ -217,6 +219,7 @@ cdef class JournalReader:
 
     def __init__(self):
         self.state = READER_NULL
+        self.flags = None
 
     def open(self, flags=JournalOpenMode.CURRENT_USER):
         self.flags = JournalOpenMode(int(flags))
@@ -430,7 +433,7 @@ cdef class JournalReader:
             sd_journal_flush_matches(self.context)
 
     def __repr__(self):
-        return "<Reader[%s]: %s>" % (self.mode.name, 'closed' if self.is_closed else 'opened')
+        return "<Reader[%s]: %s>" % (self.flags, 'closed' if self.closed else 'opened')
 
     def __dealloc__(self):
         sd_journal_close(self.context)
