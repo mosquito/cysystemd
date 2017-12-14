@@ -146,7 +146,7 @@ class JournaldLogHandler(logging.Handler):
         args = data.pop('args', [])
         if args and len(args) == 1 and isinstance(args[0], collections.Mapping) and args[0]:
             for key, value in args[0].items():
-                key = '%s_2' % key if key in data else str(key)
+                key = 'argument_%s' % key if key in data else str(key)
                 data[key] = value
         else:
             for idx, item in enumerate(args):
