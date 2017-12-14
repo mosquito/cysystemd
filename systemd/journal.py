@@ -1,3 +1,4 @@
+import collections
 import uuid
 import logging
 import traceback
@@ -142,8 +143,14 @@ class JournaldLogHandler(logging.Handler):
         )
         data['thread_name'] = data.pop('threadName')
 
-        for idx, item in enumerate(data.pop('args', [])):
-            data['argument_%d' % idx] = str(item)
+        args = data.pop('args', [])
+        if args and len(args) == 1 and isinstance(args[0], collections.Mapping) and args[0]:
+            for key, value in args[0].items():
+                key = '%s_2' % key if key in data else str(key)
+                data[key] = value
+        else:
+            for idx, item in enumerate(args):
+                data['argument_%d' % idx] = str(item)
 
         if tb_message:
             data["traceback"] = tb_message
