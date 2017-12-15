@@ -36,7 +36,7 @@ def notify(notification, value=None, unset_environment=False):
     """
 
     if not isinstance(notification, Notification):
-        raise TypeError("state must be an instance of Notigication")
+        raise TypeError("state must be an instance of Notification")
 
     state = notification.value
 
