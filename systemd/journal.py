@@ -144,8 +144,8 @@ class JournaldLogHandler(logging.Handler):
         data['thread_name'] = data.pop('threadName')
 
         args = data.pop('args', [])
-        if args and len(args) == 1 and isinstance(args[0], collections.Mapping) and args[0]:
-            for key, value in args[0].items():
+        if isinstance(args, collections.Mapping):
+            for key, value in args.items():
                 data['argument_%s' % key] = value
         else:
             for idx, item in enumerate(args):
