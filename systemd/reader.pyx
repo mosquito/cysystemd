@@ -8,13 +8,18 @@ from libc.stdint cimport uint64_t, uint8_t
 from sd_id128 cimport sd_id128_t
 
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 from contextlib import contextmanager
 from errno import errorcode
 from enum import IntEnum
-from dictproxyhack import dictproxy
 from string import ascii_letters
+
+
+try:
+    from types import MappingProxyType as dictproxy
+except ImportError:
+    from dictproxyhack import dictproxy
 
 
 cdef extern from "<poll.h>":
@@ -182,7 +187,9 @@ cdef class JournalEntry:
 
         self._data = dictproxy(self.__data)
         self.__boot_uuid = UUID(bytes=self.__boot_id.bytes[:16])
-        self.__date = datetime.fromtimestamp(self.get_realtime_sec())
+        date = datetime.utcfromtimestamp(self.get_realtime_sec())
+        date.replace(tzinfo=timezone.utc)
+        self.__date = date
 
     @property
     def cursor(self):

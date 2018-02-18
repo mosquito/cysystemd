@@ -5,14 +5,6 @@ import systemd as module
 from setuptools import setup, Extension
 
 
-requires = [
-    'dictproxyhack',
-]
-
-if sys.version_info < (3, 4):
-    requires += ['enum34']
-
-
 try:
     from Cython.Build import cythonize
 
@@ -106,4 +98,8 @@ setup(
         'Topic :: System :: Operating System',
     ],
     install_requires=requires,
+    extras_require={
+        ':python_version < "3.4"': 'enum34',
+        ':python_version < "3.3"': 'dictproxyhack',
+    }
 )
