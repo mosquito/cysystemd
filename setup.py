@@ -97,7 +97,6 @@ setup(
         'Topic :: System',
         'Topic :: System :: Operating System',
     ],
-    install_requires=requires,
     extras_require={
         ':python_version < "3.4"': 'enum34',
         ':python_version < "3.3"': 'dictproxyhack',
