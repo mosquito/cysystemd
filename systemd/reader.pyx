@@ -162,9 +162,11 @@ cdef class JournalEntry:
     cdef object _data
     cdef object __date
 
+    max_message_size = 2**20
+
     def __cinit__(self, JournalReader reader):
         cdef const void *data
-        cdef size_t length
+        cdef size_t length = 0
 
         self.__data = {}
         check_error_code(sd_journal_get_realtime_usec(reader.context, &self.realtime_usec))
@@ -174,12 +176,19 @@ cdef class JournalEntry:
         sd_journal_restart_data(reader.context)
 
         while True:
+
+            length = 0
+
             result = sd_journal_enumerate_data(reader.context, <const void **>&data, &length)
 
-            if result == 0:
+            if result == 0 or length == 0:
                 break
 
-            value = bytes((<char*> data)[:length]).decode()
+            if length > self.max_message_size:
+                log.warning("got message with enormous length %d", length)
+                break
+
+            value = bytes((<char*> data)[:length]).decode(errors='replace')
             if '=' not in value:
                 log.warning("got unexpected %r from sd_journal_enumerate_data", value)
                 break
