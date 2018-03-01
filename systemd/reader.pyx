@@ -8,6 +8,7 @@ from libc.stdint cimport uint64_t, uint8_t
 from sd_id128 cimport sd_id128_t
 
 import os
+import logging
 from datetime import datetime, timezone
 from uuid import UUID
 from contextlib import contextmanager
@@ -20,6 +21,9 @@ try:
     from types import MappingProxyType as dictproxy
 except ImportError:
     from dictproxyhack import dictproxy
+
+
+log = logging.getLogger(__name__)
 
 
 cdef extern from "<poll.h>":
@@ -176,6 +180,9 @@ cdef class JournalEntry:
                 break
 
             value = bytes((<char*> data)[:length]).decode()
+            if '=' not in value:
+                log.warning("got unexpected %r from sd_journal_enumerate_data", value)
+                break
             key, value = value.split("=", 1)
 
             if key in self.__data:
