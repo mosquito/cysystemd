@@ -39,20 +39,23 @@ Install repository key
 Install the repository file
 
 Debian Jessie:
+
 .. code-block:: bash
 
    echo "deb http://dl.bintray.com/mosquito/cysystemd jessie main" > /etc/apt/sources.list.d/cysystemd.list
    apt-get update
    apt-get install python-cysystemd python3-cysystemd
 
-Ubuntu Xenial
+Ubuntu Xenial:
+
 .. code-block:: bash
 
    echo "deb http://dl.bintray.com/mosquito/cysystemd xenial main" > /etc/apt/sources.list.d/cysystemd.list
    apt-get update
    apt-get install python-cysystemd python3-cysystemd
 
-Ubuntu Bionic
+Ubuntu Bionic:
+
 .. code-block:: bash
 
    echo "deb http://dl.bintray.com/mosquito/cysystemd bionic main" > /etc/apt/sources.list.d/cysystemd.list
@@ -62,6 +65,8 @@ Ubuntu Bionic
 
 Centos 7
 ++++++++
+
+.. code-block:: bash
 
    yum localinstall \
       https://github.com/mosquito/cysystemd/releases/download/0.17.1/python-cysystemd-0.17.1-1.centos7.x86_64.rpm
@@ -153,5 +158,4 @@ Or add logging handler to python logger
         raise Exception('foo')
     except:
         logger.exception("Test Exception %s", 1)
-
 
