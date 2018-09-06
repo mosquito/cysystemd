@@ -17,12 +17,6 @@ from enum import IntEnum
 from string import ascii_letters
 
 
-try:
-    from types import MappingProxyType as dictproxy
-except ImportError:
-    from dictproxyhack import dictproxy
-
-
 log = logging.getLogger(__name__)
 
 
@@ -201,7 +195,7 @@ cdef class JournalEntry:
             else:
                 self.__data[key] = value
 
-        self._data = dictproxy(self.__data)
+        self._data = self.__data
         self.__boot_uuid = UUID(bytes=self.__boot_id.bytes[:16])
         date = datetime.utcfromtimestamp(self.get_realtime_sec())
         date.replace(tzinfo=timezone.utc)
