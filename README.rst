@@ -21,6 +21,15 @@ Python systemd wrapper using Cython
 Installation
 ------------
 
+Binary packages
++++++++++++++++
+
+Centos 7 Ubuntu (xenial/bionic) and Debian 8 packages available on
+`github releases <https://github.com/mosquito/cysystemd/releases>`_.
+
+Installation from sources
++++++++++++++++++++++++++
+
 You should install systemd headers 
 
 For debian users:
