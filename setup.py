@@ -1,7 +1,5 @@
-#!/usr/bin/env python
-# encoding: utf-8
 import sys
-import systemd as module
+import cysystemd as module
 from setuptools import setup, Extension
 
 
@@ -10,21 +8,21 @@ try:
 
     extensions = cythonize([
         Extension(
-            "systemd._daemon",
-            ["systemd/_daemon.pyx"],
+            "cysystemd._daemon",
+            ["cysystemd/_daemon.pyx"],
             libraries=['systemd'],
         ),
         Extension(
-            "systemd._journal",
-            ["systemd/_journal.pyx"],
+            "cysystemd._journal",
+            ["cysystemd/_journal.pyx"],
             libraries=['systemd'],
             extra_compile_args=[
                 '-DSYSLOG_NAMES=1',
             ]
         ),
         Extension(
-            "systemd.reader",
-            ["systemd/reader.pyx"],
+            "cysystemd.reader",
+            ["cysystemd/reader.pyx"],
             libraries=['systemd'],
             extra_compile_args=[
                 '-DSYSLOG_NAMES=1',
@@ -35,21 +33,21 @@ try:
 except ImportError:
     extensions = [
         Extension(
-            "systemd._daemon",
-            ["systemd/_daemon.c"],
+            "cysystemd._daemon",
+            ["cysystemd/_daemon.c"],
             libraries=['systemd'],
         ),
         Extension(
-            "systemd._journal",
-            ["systemd/_journal.c"],
+            "cysystemd._journal",
+            ["cysystemd/_journal.c"],
             libraries=['systemd'],
             extra_compile_args=[
                 '-DSYSLOG_NAMES=1',
             ]
         ),
         Extension(
-            "systemd.reader",
-            ["systemd/reader.c"],
+            "cysystemd.reader",
+            ["cysystemd/reader.c"],
             libraries=['systemd'],
             extra_compile_args=[
                 '-DSYSLOG_NAMES=1',
@@ -63,18 +61,18 @@ setup(
     ext_modules=extensions,
     version=module.__version__,
     packages=[
-        'systemd',
+        'cysystemd',
     ],
     license=module.license,
     description=module.package_info,
     long_description=open("README.rst").read(),
     platforms=["POSIX"],
-    url='http://github.com/mosquito/python-systemd',
+    url='http://github.com/mosquito/cysystemd',
     author=module.__author__,
     author_email=module.author_email,
     provides=["systemd"],
     build_requires=['cython'],
-    keywords="systemd, python, daemon, sd_notify, cython",
+    keywords=("systemd", "python", "daemon", "sd_notify", "cython"),
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',
@@ -92,6 +90,7 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: CPython',
         'Topic :: Software Development :: Libraries',
         'Topic :: System',

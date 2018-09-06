@@ -1,18 +1,18 @@
-SystemD for Python
-==================
+SystemD wrapper on Cython
+=========================
 
-.. image:: https://img.shields.io/pypi/v/systemd.svg
-    :target: https://pypi.python.org/pypi/systemd/
+.. image:: https://img.shields.io/pypi/v/cysystemd.svg
+    :target: https://pypi.python.org/pypi/cysystemd/
     :alt: Latest Version
 
-.. image:: https://img.shields.io/pypi/wheel/systemd.svg
-    :target: https://pypi.python.org/pypi/systemd/
+.. image:: https://img.shields.io/pypi/wheel/cysystemd.svg
+    :target: https://pypi.python.org/pypi/cysystemd/
 
-.. image:: https://img.shields.io/pypi/pyversions/systemd.svg
-    :target: https://pypi.python.org/pypi/systemd/
+.. image:: https://img.shields.io/pypi/pyversions/cysystemd.svg
+    :target: https://pypi.python.org/pypi/cysystemd/
 
-.. image:: https://img.shields.io/pypi/l/systemd.svg
-    :target: https://pypi.python.org/pypi/systemd/
+.. image:: https://img.shields.io/pypi/l/cysystemd.svg
+    :target: https://pypi.python.org/pypi/cysystemd/
 
 
 Python systemd wrapper using Cython
@@ -45,7 +45,7 @@ And install it from pypi
 
 .. code-block:: bash
 
-    pip install systemd
+    pip install cysystemd
 
 
 Usage examples
@@ -56,7 +56,7 @@ Systemd daemon notification
 
 .. code-block:: python
 
-    from systemd.daemon import notify, Notification
+    from cysystemd.daemon import notify, Notification
 
     # Send READY=1
     notify(Notification.READY)
@@ -73,7 +73,7 @@ Write message into Systemd journal
 
 .. code-block:: python
 
-    from systemd import journal
+    from cysystemd import journal
 
 
     journal.write("Hello Lennart")
@@ -91,7 +91,7 @@ Or add logging handler to python logger
 
 .. code-block:: python
 
-    from systemd import journal
+    from cysystemd import journal
     import logging
     import uuid
 
