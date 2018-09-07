@@ -22,6 +22,36 @@ rpm_centos7: images sdist
 			--epoch $(EPOCH) \
 			-f -s python -t rpm /app
 
+	docker run -i --rm \
+		-v $(CUR_DIR):/app \
+		--workdir /app/dist \
+		cysystemd:centos7 \
+		fpm --license "Apache 2" -d systemd-libs -d python34u \
+			--rpm-dist centos7 \
+			--epoch $(EPOCH) \
+			--python-bin python3.4 --python-package-name-prefix python34u \
+			-f -s python -t rpm /app
+
+	docker run -i --rm \
+		-v $(CUR_DIR):/app \
+		--workdir /app/dist \
+		cysystemd:centos7 \
+		fpm --license "Apache 2" -d systemd-libs -d python35u \
+			--rpm-dist centos7 \
+			--epoch $(EPOCH) \
+			--python-bin python3.5 --python-package-name-prefix python35u \
+			-f -s python -t rpm /app
+
+	docker run -i --rm \
+		-v $(CUR_DIR):/app \
+		--workdir /app/dist \
+		cysystemd:centos7 \
+		fpm --license "Apache 2" -d systemd-libs -d python36u \
+			--rpm-dist centos7 \
+			--epoch $(EPOCH) \
+			--python-bin python3.6 --python-package-name-prefix python36u \
+			-f -s python -t rpm /app
+
 deb_debian8: images sdist
 	docker run -i --rm \
 		-v $(CUR_DIR):/app \
