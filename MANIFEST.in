@@ -1,6 +1,6 @@
 recursive-exclude tests *
-recursive-exclude systemd *.pyc
+recursive-exclude cysystemd *.pyc
 recursive-exclude __pycache__ *
-recursive-include systemd *.pyx *.pxd
+recursive-include cysystemd *.pyx *.pxd
 exclude .*
 include README.md
