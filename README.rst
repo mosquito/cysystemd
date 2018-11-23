@@ -18,6 +18,9 @@ SystemD wrapper on Cython
 Python systemd wrapper using Cython
 
 
+.. contents:: Table of contents
+
+
 Installation
 ------------
 
