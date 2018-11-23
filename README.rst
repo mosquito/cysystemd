@@ -105,7 +105,31 @@ And install it from pypi
 Usage examples
 --------------
 
+Writing to journald
++++++++++++++++++++
+
+Logging handler for python logger
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    from cysystemd import journal
+    import logging
+    import uuid
+
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger()
+    logger.addHandler(journal.JournaldLogHandler())
+
+    try:
+        log.info("Trying to do something")
+        raise Exception('foo')
+    except:
+        logger.exception("Test Exception %s", 1)
+
+
 Systemd daemon notification
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 .. code-block:: python
@@ -140,22 +164,63 @@ Write message into Systemd journal
     )
 
 
+Reading journald
+++++++++++++++++
 
-Or add logging handler to python logger
+Reading all systemd records
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
-    from cysystemd import journal
-    import logging
-    import uuid
+   from cysystemd.reader import JournalReader, JournalOpenMode
 
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger()
-    logger.addHandler(journal.JournaldLogHandler())
+   journal_reader = JournalReader()
+   journal_reader.open(JournalOpenMode.SYSTEM)
+   journal_reader.seek_head()
 
-    try:
-        log.info("Trying to do something")
-        raise Exception('foo')
-    except:
-        logger.exception("Test Exception %s", 1)
+   for record in journal_reader:
+      print(record.data['MESSAGE'])
+
+
+Read only cron logs
+~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   from cysystemd.reader import JournalReader, JournalOpenMode, Matcher
+
+
+   match_rules = Matcher().includes(
+      "SYSLOG_IDENTIFIER", "CRON"
+   ).excludes(
+      "UNIT", "systemd.service"
+   )
+
+   cron_reader = JournalReader()
+   cron_reader.add_filter(match_rules)
+   cron_reader.open(JournalOpenMode.SYSTEM)
+
+   for record in cron_reader:
+      print(record.data['MESSAGE'])
+
+
+Polling records
+~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   from cysystemd.reader import JournalReader, JournalOpenMode
+
+
+   reader = JournalReader()
+   reader.open(JournalOpenMode.SYSTEM)
+   reader.seek_tail()
+
+   poll_timeout = 255
+
+   while True:
+      reader.wait(poll_timeout)
+
+      for record in reader:
+         print(record.data['MESSAGE'])
 

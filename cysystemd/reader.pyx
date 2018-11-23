@@ -30,8 +30,8 @@ EV_POLLOUT = POLLOUT
 
 
 cdef enum MATHCER_OPERATION:
-    MATHCER_OPERATION_AND,
-    MATHCER_OPERATION_OR,
+    MATHCER_OPERATION_CONJUNCTION,
+    MATHCER_OPERATION_DISJUNCTION,
 
 
 cdef class Matcher:
@@ -40,16 +40,22 @@ cdef class Matcher:
     def __init__(self):
         self.chain = []
 
-    def and_(self, str key, str value):
-        self.chain.append((MATHCER_OPERATION_AND, Operation(key, value)))
+    def includes(self, str key, str value):
+        self.chain.append((
+            MATHCER_OPERATION_CONJUNCTION,
+            Operation(key, value)
+        ))
         return self
 
-    def or_(self, str key, str value):
-        self.chain.append((MATHCER_OPERATION_OR, Operation(key, value)))
+    def excludes(self, str key, str value):
+        self.chain.append((
+            MATHCER_OPERATION_DISJUNCTION,
+            Operation(key, value)
+        ))
         return self
 
     def __repr__(self):
-        return "Matcher({0!r})".format(self.chain)
+        return "{0}({1!r})".format(self.__class__.__name__, self.chain)
 
 
 cdef class Operation:
@@ -439,7 +445,7 @@ cdef class JournalReader:
         for operation_code, operation in matcher.chain:
             exp = operation.expression
 
-            if operation_code == MATHCER_OPERATION_OR:
+            if operation_code == MATHCER_OPERATION_DISJUNCTION:
                 result = sd_journal_add_disjunction(self.context)
                 check_error_code(result)
             result = sd_journal_add_match(self.context, exp, 0)
