@@ -1,4 +1,3 @@
-import sys
 import cysystemd as module
 from setuptools import setup, Extension
 
