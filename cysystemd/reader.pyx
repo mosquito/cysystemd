@@ -1,10 +1,10 @@
 #cython: unraisable_tracebacks=True
 
 from libc.stdlib cimport malloc, free
+from libc.stdint cimport uint64_t, uint8_t, uint32_t
 from cpython cimport dict
 
 from sd_journal cimport *
-from libc.stdint cimport uint64_t, uint8_t
 from sd_id128 cimport sd_id128_t
 
 import os
@@ -14,19 +14,18 @@ from uuid import UUID
 from contextlib import contextmanager
 from errno import errorcode
 from enum import IntEnum
-from string import ascii_letters
 
 
 log = logging.getLogger(__name__)
 
 
-cdef extern from "<poll.h>":
-    cdef const int POLLIN
-    cdef const int POLLOUT
+WAIT_MAX_TIME = 4294967295
 
 
-EV_POLLIN = POLLIN
-EV_POLLOUT = POLLOUT
+class JournalEvent(IntEnum):
+    NOP = SD_JOURNAL_NOP
+    APPEND = SD_JOURNAL_APPEND
+    INVALIDATE =  SD_JOURNAL_INVALIDATE
 
 
 cdef enum MATHCER_OPERATION:
@@ -34,51 +33,94 @@ cdef enum MATHCER_OPERATION:
     MATHCER_OPERATION_DISJUNCTION,
 
 
-cdef class Matcher:
-    cdef list chain
-
-    def __init__(self):
-        self.chain = []
-
-    def includes(self, str key, str value):
-        self.chain.append((
-            MATHCER_OPERATION_CONJUNCTION,
-            Operation(key, value)
-        ))
-        return self
-
-    def excludes(self, str key, str value):
-        self.chain.append((
-            MATHCER_OPERATION_DISJUNCTION,
-            Operation(key, value)
-        ))
-        return self
-
-    def __repr__(self):
-        return "{0}({1!r})".format(self.__class__.__name__, self.chain)
+class MatchOperation(IntEnum):
+    AND = MATHCER_OPERATION_CONJUNCTION
+    OR = MATHCER_OPERATION_DISJUNCTION
 
 
-cdef class Operation:
-    cdef bytes __expression
+cdef extern from "<poll.h>":
+    cdef const int POLLIN
+    cdef const int POLLOUT
 
-    def __repr__(self):
-        return "%r" % self.expression.decode()
 
-    def __cinit__(self, str key, str value):
-        if key[0] not in ascii_letters:
-            raise ValueError("Key must be start from ascii-letter")
+class Poll(IntEnum):
+    IN = POLLIN
+    OUT = POLLOUT
 
+
+cdef class Rule:
+    cdef object _expression
+    cdef object _child
+    cdef object _root
+    cdef object _operand
+
+    def __init__(self, str key, str value):
         cdef str exp = "=".join((key.upper(), value))
-        cdef bytes bexp
 
         if '\0' in exp:
-            raise ValueError("Expression must not contain \ 0 character")
+            raise ValueError("Expression must not contains \\0 character")
 
-        self.__expression = exp.encode()
+        self._expression = exp.encode()
+        self._child = None
+        self._root = self
+        self._operand = MatchOperation.AND
 
     @property
     def expression(self):
-        return self.__expression
+        return self._expression
+
+    @property
+    def child(self):
+        return self._child
+
+    @child.setter
+    def child(self, Rule child):
+        self._child = child
+
+    @property
+    def root(self):
+        return self._root
+
+    @root.setter
+    def root(self, Rule root):
+        self._root = root
+
+    @property
+    def operand(self):
+        return self._operand
+
+    @operand.setter
+    def operand(self, uint8_t op):
+        self._operand = MatchOperation(op)
+
+    def __and__(self, Rule other):
+        self.operand = MatchOperation.AND
+        self.child = other
+        other.root = self.root
+
+        return other
+
+    def __or__(self, Rule other):
+        self.operand = MatchOperation.OR
+        self.child = other
+        other.root = self.root
+
+        return other
+
+    def __repr__(self):
+        ret = []
+        for opcode, exp in self:
+            ret.append("%r" % exp.decode())
+            ret.append(opcode.name)
+
+        return 'Rule(%r)' % ' '.join(ret[:-1])
+
+    def __iter__(self):
+        rule = self.root
+
+        while rule is not None:
+            yield rule.operand, rule.expression
+            rule = rule.child
 
 
 def check_error_code(int code):
@@ -214,11 +256,17 @@ cdef class JournalEntry:
     cpdef float get_realtime_sec(self):
         return self.realtime_usec / 1000000
 
-    def boot_id(self):
-        return self.boot_id
-
     cpdef float get_monotonic_sec(self):
         return self.monotonic_usec / 1000000
+
+    cpdef uint64_t get_realtime_usec(self):
+        return self.realtime_usec
+
+    cpdef uint64_t get_monotonic_usec(self):
+        return self.monotonic_usec
+
+    def boot_id(self):
+        return self.boot_id
 
     @property
     def date(self):
@@ -233,6 +281,9 @@ cdef class JournalEntry:
 
     def __repr__(self):
         return "<JournalEntry: %r>" % self.date
+
+    def __getitem__(self, str key):
+        return self._data[key]
 
 
 cdef class JournalReader:
@@ -324,7 +375,7 @@ cdef class JournalReader:
     def seek_head(self):
         cdef int result
 
-        with nogil:
+        with self._lock():
             result = sd_journal_seek_head(self.context)
 
         check_error_code(result)
@@ -334,7 +385,7 @@ cdef class JournalReader:
     def seek_tail(self):
         cdef int result
 
-        with nogil:
+        with self._lock():
             result = sd_journal_seek_tail(self.context)
 
         check_error_code(result)
@@ -345,7 +396,8 @@ cdef class JournalReader:
         cdef int result
 
         cboot_id.bytes = boot_id.bytes
-        with nogil:
+
+        with self._lock():
             result = sd_journal_seek_monotonic_usec(self.context, cboot_id, usec)
 
         check_error_code(result)
@@ -355,7 +407,7 @@ cdef class JournalReader:
         cdef uint64_t cusec = usec
         cdef int result
 
-        with nogil:
+        with self._lock():
             result = sd_journal_seek_realtime_usec(self.context, cusec)
 
         check_error_code(result)
@@ -371,14 +423,15 @@ cdef class JournalReader:
         check_error_code(result)
         return True
 
-    cpdef wait(self, uint8_t timeout):
+    cpdef wait(self, uint32_t timeout = WAIT_MAX_TIME):
         cdef uint64_t timeout_usec = timeout * 1000000
         cdef int result
 
-        with nogil:
-            result = sd_journal_wait(self.context, timeout_usec)
+        with self._lock():
+            with nogil:
+                result = sd_journal_wait(self.context, timeout_usec)
 
-        check_error_code(result)
+        return JournalEvent(check_error_code(result))
 
     def __iter__(self):
         return self
@@ -389,125 +442,103 @@ cdef class JournalReader:
             raise StopIteration
         return result
 
-    def next(self):
+    def next(self, uint64_t skip=0):
         cdef int result
 
-        with nogil:
-            result = sd_journal_next(self.context)
+        with self._lock():
+            if skip:
+                result = sd_journal_next_skip(self.context, skip)
+            else:
+                result = sd_journal_next(self.context)
 
-        check_error_code(result)
-
-        if result > 0:
-            return JournalEntry(self)
-        else:
-            return None
+            if check_error_code(result) > 0:
+                return JournalEntry(self)
 
     def skip_next(self, uint64_t skip):
         cdef int result
 
-        with nogil:
+        with self._lock():
             result = sd_journal_next_skip(self.context, skip)
 
-        check_error_code(result)
+        return check_error_code(result)
 
     def previous(self, uint64_t skip=0):
         cdef int result
 
-        with nogil:
+        with self._lock():
             if skip:
                 result = sd_journal_previous_skip(self.context, skip)
             else:
                 result = sd_journal_previous(self.context)
 
-
-        check_error_code(result)
-
-        if skip:
-            return None
-
-        if result > 0:
-            return JournalEntry(self)
-        else:
-            return None
+            if check_error_code(result) > 0:
+                return JournalEntry(self)
 
     def skip_previous(self, uint64_t skip):
         cdef int result
 
-        with nogil:
+        with self._lock():
             result = sd_journal_previous_skip(self.context, skip)
 
-        check_error_code(result)
+        return check_error_code(result)
 
-    def add_filter(self, Matcher matcher):
+    def add_filter(self, Rule rule):
         cdef int result
         cdef char* exp
 
-        for operation_code, operation in matcher.chain:
-            exp = operation.expression
-
-            if operation_code == MATHCER_OPERATION_DISJUNCTION:
-                result = sd_journal_add_disjunction(self.context)
+        with self._lock():
+            for operand, exp in rule:
+                result = sd_journal_add_match(self.context, exp, 0)
                 check_error_code(result)
-            result = sd_journal_add_match(self.context, exp, 0)
-            check_error_code(result)
+
+                if operand == MatchOperation.OR:
+                    result = sd_journal_add_disjunction(self.context)
+                    return check_error_code(result)
+
+                elif operand == MatchOperation.AND:
+                    result = sd_journal_add_conjunction(self.context)
+                    return check_error_code(result)
+
+                raise ValueError('Invalid operation')
 
     def clear_filter(self):
-        with nogil:
-            sd_journal_flush_matches(self.context)
+        sd_journal_flush_matches(self.context)
 
     def __repr__(self):
-        return "<Reader[%s]: %s>" % (self.flags, 'closed' if self.closed else 'opened')
+        return "<Reader[%s]: %s>" % (
+            self.flags, 'closed' if self.closed else 'opened'
+        )
 
     def __dealloc__(self):
         sd_journal_close(self.context)
 
     @property
     def fd(self):
-        cdef int result
-
-        with nogil:
-            result = sd_journal_get_fd(self.context)
-
-        return check_error_code(result)
+        return check_error_code(sd_journal_get_fd(self.context))
 
     @property
     def events(self):
-        cdef int result
-
-        with nogil:
-            result = sd_journal_get_events(self.context)
-
-        return check_error_code(result)
+        return Poll(check_error_code(sd_journal_get_events(self.context)))
 
     @property
     def timeout(self):
-        cdef int result
         cdef uint64_t timeout
-
-        with nogil:
-            result = sd_journal_get_timeout(self.context, &timeout)
-
-        check_error_code(result)
+        check_error_code(sd_journal_get_timeout(self.context, &timeout))
         return timeout
 
     def process_events(self):
-        cdef int result
-
-        with nogil:
-            result = sd_journal_process(self.context)
-
-        check_error_code(result)
+        return JournalEvent(check_error_code(sd_journal_process(self.context)))
 
     def get_catalog(self):
         cdef int result
         cdef char* catalog
         cdef bytes bcatalog
 
-        with nogil:
-            result = sd_journal_get_catalog(self.context, &catalog)
+        result = sd_journal_get_catalog(self.context, &catalog)
 
         length = check_error_code(result)
         bcatalog = catalog[:length]
+        free(catalog)
 
         return bcatalog
 
@@ -524,5 +555,6 @@ cdef class JournalReader:
 
         length = check_error_code(result)
         bcatalog = catalog[:length]
+        free(catalog)
 
         return bcatalog
