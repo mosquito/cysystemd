@@ -202,8 +202,9 @@ Read only cron logs
    )
 
    cron_reader = JournalReader()
-   cron_reader.add_filter(rules)
    cron_reader.open(JournalOpenMode.SYSTEM)
+   cron_reader.seek_head()
+   cron_reader.add_filter(rules)
 
    for record in cron_reader:
       print(record.data['MESSAGE'])

@@ -1,5 +1,5 @@
 package_info = "SystemD wrapper on Cython"
-version_info = (1, 1, 0)
+version_info = (1, 1, 1)
 
 
 author_info = (
