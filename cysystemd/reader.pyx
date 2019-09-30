@@ -1,6 +1,6 @@
 #cython: unraisable_tracebacks=True
 
-from libc.stdlib cimport malloc, free
+from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.stdint cimport uint64_t, uint8_t, uint32_t
 from cpython cimport dict
 
@@ -277,7 +277,7 @@ cdef class JournalEntry:
         return self._data
 
     def __dealloc__(self):
-        free(self.cursor)
+        PyMem_Free(self.cursor)
 
     def __repr__(self):
         return "<JournalEntry: %r>" % self.date
@@ -311,7 +311,7 @@ cdef class JournalReader:
     def open_files(self, *file_names):
         file_names = tuple(map(_check_file_path, file_names))
 
-        cdef char **paths = <char **>malloc(len(file_names) * sizeof(char*))
+        cdef char **paths = <char **>PyMem_Malloc(len(file_names) * sizeof(char*))
 
         for i, s in enumerate(file_names):
             cstr = s.encode()
@@ -321,7 +321,7 @@ cdef class JournalReader:
             with self._lock(opening=True):
                 check_error_code(sd_journal_open_files(&self.context, paths, 0))
         finally:
-            free(paths)
+            PyMem_Free(paths)
 
     @property
     def data_threshold(self):
@@ -538,7 +538,7 @@ cdef class JournalReader:
 
         length = check_error_code(result)
         bcatalog = catalog[:length]
-        free(catalog)
+        PyMem_Free(catalog)
 
         return bcatalog
 
@@ -555,6 +555,6 @@ cdef class JournalReader:
 
         length = check_error_code(result)
         bcatalog = catalog[:length]
-        free(catalog)
+        PyMem_Free(catalog)
 
         return bcatalog

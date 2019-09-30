@@ -78,7 +78,7 @@ Centos 7
 Installation from sources
 +++++++++++++++++++++++++
 
-You should install systemd headers 
+You should install systemd headers
 
 For debian users:
 
