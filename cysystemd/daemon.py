@@ -53,10 +53,7 @@ def notify(notification, value=None, unset_environment=False):
 
     log.debug("Send %r into systemd", line)
 
-    try:
-        return sd_notify(line, unset_environment)
-    except Exception as e:
-        log.error("%s", e)
+    return sd_notify(line, unset_environment)
 
 
 __all__ = ('notify', 'Notification')
