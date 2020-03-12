@@ -5,8 +5,6 @@ from ._daemon import sd_notify
 
 
 log = logging.getLogger('systemd.daemon')
-
-
 NotificationValue = namedtuple("NotificationValue", ("name", "constant", "type"))
 
 
@@ -25,12 +23,20 @@ class Notification(Enum):
     WATCHDOG_USEC = NotificationValue(name='WATCHDOG_USEC', constant=None, type=int)
 
 
-def notify(notification, value=None, unset_environment=False):
+def notify(notification: Notification,
+           value: int = None,
+           unset_environment: bool = False,
+           return_exceptions: bool = True):
+
     """ Send notification to systemd daemon
 
-    :type notification: Notification
-    :type value: int
-    :type unset_environment: bool 
+    :param return_exceptions: Return exception or raise it.
+    :param unset_environment: If the unset_environment parameter is non-zero,
+        notify() will unset the $NOTIFY_SOCKET environment variable
+        before returning (regardless of whether the function call itself
+        succeeded or not). Further calls to notify() will then fail,
+        but the variable is no longer inherited by child processes.
+    :param notification: Notification object
     :param value: str or int value for non constant notifications
     :returns None
     """
@@ -56,7 +62,10 @@ def notify(notification, value=None, unset_environment=False):
     try:
         return sd_notify(line, unset_environment)
     except Exception as e:
-        log.error("%s", e)
+        if return_exceptions:
+            log.error("%s", e)
+            return e
+        raise
 
 
 __all__ = ('notify', 'Notification')
