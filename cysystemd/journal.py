@@ -9,20 +9,20 @@ from ._journal import syslog_priorities, send
 _priorities = syslog_priorities()
 
 
-__all__ = 'write', 'send', 'Priority', 'JournaldLogHandler', 'Facility'
+__all__ = "write", "send", "Priority", "JournaldLogHandler", "Facility"
 
 
 @unique
 class Priority(IntEnum):
-    PANIC = _priorities['panic']
-    WARNING = _priorities['warn']
-    ALERT = _priorities['alert']
-    NONE = _priorities['none']
-    CRITICAL = _priorities['crit']
-    DEBUG = _priorities['debug']
-    INFO = _priorities['info']
-    ERROR = _priorities['error']
-    NOTICE = _priorities['notice']
+    PANIC = _priorities["panic"]
+    WARNING = _priorities["warn"]
+    ALERT = _priorities["alert"]
+    NONE = _priorities["none"]
+    CRITICAL = _priorities["crit"]
+    DEBUG = _priorities["debug"]
+    INFO = _priorities["info"]
+    ERROR = _priorities["error"]
+    NOTICE = _priorities["notice"]
 
 
 @unique
@@ -76,7 +76,7 @@ class JournaldLogHandler(logging.Handler):
         logging.NOTSET: Priority.NONE.value,
     }
 
-    __slots__ = '__facility',
+    __slots__ = ("__facility",)
 
     def __init__(self, identifier=None, facility=Facility.DAEMON):
         """
@@ -99,9 +99,11 @@ class JournaldLogHandler(logging.Handler):
     def emit(self, record):
         message = str(record.getMessage())
 
-        tb_message = ''
+        tb_message = ""
         if record.exc_info:
-            tb_message = "\n".join(traceback.format_exception(*record.exc_info))
+            tb_message = "\n".join(
+                traceback.format_exception(*record.exc_info)
+            )
 
         message += "\n"
         message += tb_message
@@ -109,47 +111,60 @@ class JournaldLogHandler(logging.Handler):
         ts = self._to_microsecond(record.created)
 
         hash_fields = (
-            message, record.funcName, record.levelno, record.process, record.processName,
-            record.levelname, record.pathname, record.name, record.thread, record.lineno,
-            ts, tb_message
+            message,
+            record.funcName,
+            record.levelno,
+            record.process,
+            record.processName,
+            record.levelname,
+            record.pathname,
+            record.name,
+            record.thread,
+            record.lineno,
+            ts,
+            tb_message,
         )
 
-        message_id = uuid.uuid3(uuid.NAMESPACE_OID, "$".join(str(x) for x in hash_fields)).hex
+        message_id = uuid.uuid3(
+            uuid.NAMESPACE_OID, "$".join(str(x) for x in hash_fields)
+        ).hex
 
-        data = {key: value for key, value in record.__dict__.items() if not key.startswith("_") and value is not None}
-        data['message'] = self.format(record)
-        data['priority'] = self.LEVELS[data.pop('levelno')]
-        data['syslog_facility'] = self.__facility
+        data = {
+            key: value
+            for key, value in record.__dict__.items()
+            if not key.startswith("_") and value is not None
+        }
+        data["message"] = self.format(record)
+        data["priority"] = self.LEVELS[data.pop("levelno")]
+        data["syslog_facility"] = self.__facility
 
-        data['code_file'] = data.pop('filename')
-        data['code_line'] = data.pop('lineno')
-        data['code_func'] = data.pop('funcName')
+        data["code_file"] = data.pop("filename")
+        data["code_line"] = data.pop("lineno")
+        data["code_func"] = data.pop("funcName")
         if self.__identifier:
-            data['syslog_identifier'] = self.__identifier
+            data["syslog_identifier"] = self.__identifier
         else:
-            data['syslog_identifier'] = data['name']
+            data["syslog_identifier"] = data["name"]
 
-        if 'msg' in data:
-            data['message_raw'] = data.pop('msg')
+        if "msg" in data:
+            data["message_raw"] = data.pop("msg")
 
-        data['message_id'] = message_id
-        data['code_module'] = data.pop('module')
-        data['logger_name'] = data.pop('name')
-        data['pid'] = data.pop('process')
-        data['proccess_name'] = data.pop('processName')
-        data['errno'] = 0 if not record.exc_info else 255
-        data['relative_ts'] = self._to_microsecond(
-            data.pop('relativeCreated')
-        )
-        data['thread_name'] = data.pop('threadName')
+        data["message_id"] = message_id
+        data["code_module"] = data.pop("module")
+        data["logger_name"] = data.pop("name")
+        data["pid"] = data.pop("process")
+        data["proccess_name"] = data.pop("processName")
+        data["errno"] = 0 if not record.exc_info else 255
+        data["relative_ts"] = self._to_microsecond(data.pop("relativeCreated"))
+        data["thread_name"] = data.pop("threadName")
 
-        args = data.pop('args', [])
+        args = data.pop("args", [])
         if isinstance(args, collections.Mapping):
             for key, value in args.items():
-                data['argument_%s' % key] = value
+                data["argument_%s" % key] = value
         else:
             for idx, item in enumerate(args):
-                data['argument_%d' % idx] = str(item)
+                data["argument_%d" % idx] = str(item)
 
         if tb_message:
             data["traceback"] = tb_message
@@ -161,7 +176,7 @@ handler = JournaldLogHandler()
 
 
 class JournaldLogger(logging.Logger):
-    def __init__(self, level, name='root'):
+    def __init__(self, level, name="root"):
         super(JournaldLogger, self).__init__(name, level)
         self.addHandler(handler)
 
