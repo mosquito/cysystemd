@@ -4,29 +4,35 @@ from collections import namedtuple
 from ._daemon import sd_notify
 
 
-log = logging.getLogger('systemd.daemon')
-NotificationValue = namedtuple("NotificationValue", ("name", "constant", "type"))
+log = logging.getLogger("systemd.daemon")
+NotificationValue = namedtuple(
+    "NotificationValue", ("name", "constant", "type")
+)
 
 
 @unique
 class Notification(Enum):
-    READY = NotificationValue(name='READY', constant=1, type=int)
-    RELOADING = NotificationValue(name='RELOADING', constant=1, type=int)
-    STOPPING = NotificationValue(name='STOPPING', constant=1, type=int)
-    STATUS = NotificationValue(name='STATUS', constant=None, type=str)
-    ERRNO = NotificationValue(name='ERRNO', constant=None, type=int)
-    BUSERROR = NotificationValue(name='BUSERROR', constant=None, type=str)
-    MAINPID = NotificationValue(name='MAINPID', constant=None, type=int)
-    WATCHDOG = NotificationValue(name='WATCHDOG', constant=1, type=int)
-    FDSTORE = NotificationValue(name='FDSTORE', constant=1, type=int)
-    FDNAME = NotificationValue(name='FDNAME', constant=None, type=int)
-    WATCHDOG_USEC = NotificationValue(name='WATCHDOG_USEC', constant=None, type=int)
+    READY = NotificationValue(name="READY", constant=1, type=int)
+    RELOADING = NotificationValue(name="RELOADING", constant=1, type=int)
+    STOPPING = NotificationValue(name="STOPPING", constant=1, type=int)
+    STATUS = NotificationValue(name="STATUS", constant=None, type=str)
+    ERRNO = NotificationValue(name="ERRNO", constant=None, type=int)
+    BUSERROR = NotificationValue(name="BUSERROR", constant=None, type=str)
+    MAINPID = NotificationValue(name="MAINPID", constant=None, type=int)
+    WATCHDOG = NotificationValue(name="WATCHDOG", constant=1, type=int)
+    FDSTORE = NotificationValue(name="FDSTORE", constant=1, type=int)
+    FDNAME = NotificationValue(name="FDNAME", constant=None, type=int)
+    WATCHDOG_USEC = NotificationValue(
+        name="WATCHDOG_USEC", constant=None, type=int
+    )
 
 
-def notify(notification: Notification,
-           value: int = None,
-           unset_environment: bool = False,
-           return_exceptions: bool = True):
+def notify(
+    notification: Notification,
+    value: int = None,
+    unset_environment: bool = False,
+    return_exceptions: bool = True,
+):
 
     """ Send notification to systemd daemon
 
@@ -48,13 +54,15 @@ def notify(notification: Notification,
 
     if state.constant is not None and value:
         raise ValueError(
-            "State %s should contain only constant value %r" % (state.name, state.constant),
-            state.name, state.constant
+            "State %s should contain only constant value %r"
+            % (state.name, state.constant),
+            state.name,
+            state.constant,
         )
 
     line = "%s=%s" % (
         state.name,
-        state.constant if state.constant is not None else state.type(value)
+        state.constant if state.constant is not None else state.type(value),
     )
 
     log.debug("Send %r into systemd", line)
@@ -68,4 +76,4 @@ def notify(notification: Notification,
         raise
 
 
-__all__ = ('notify', 'Notification')
+__all__ = ("notify", "Notification")
