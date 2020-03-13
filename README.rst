@@ -322,3 +322,42 @@ JournalReader class has some special properties and methods:
   ``get_catalog()`` but the entry is looked up by the specified
   message ID (no open journal context is necessary for this),
   and no field substitution is performed.
+
+
+Asyncio support
++++++++++++++++
+
+Initial ``asyncio`` support for reading journal asynchronously.
+
+AsyncJournalReader
+~~~~~~~~~~~~~~~
+
+Blocking methods were wrapped by threads.
+Method ``wait()`` use epoll on journald file descriptor.
+
+.. code-block:: python
+
+   import asyncio
+   import json
+
+   from cysystemd.reader import JournalOpenMode
+   from cysystemd.async_reader import AsyncJournalReader
+
+
+   async def main():
+       reader = AsyncJournalReader()
+       await reader.open(JournalOpenMode.SYSTEM)
+       await reader.seek_tail()
+
+       while await reader.wait():
+           async for record in reader:
+               print(
+                   json.dumps(
+                       record.data,
+                       indent=1,
+                       sort_keys=True
+                   )
+               )
+
+   if __name__ == '__main__':
+       asyncio.run(main())
