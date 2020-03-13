@@ -4,7 +4,7 @@ from collections import namedtuple
 from ._daemon import sd_notify
 
 
-log = logging.getLogger("systemd.daemon")
+log = logging.getLogger("cysystemd.daemon")
 NotificationValue = namedtuple(
     "NotificationValue", ("name", "constant", "type")
 )
