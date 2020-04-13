@@ -330,7 +330,7 @@ Asyncio support
 Initial ``asyncio`` support for reading journal asynchronously.
 
 AsyncJournalReader
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 Blocking methods were wrapped by threads.
 Method ``wait()`` use epoll on journald file descriptor.

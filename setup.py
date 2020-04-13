@@ -66,7 +66,7 @@ setup(
     author_email=module.author_email,
     provides=["systemd"],
     build_requires=["cython"],
-    keywords=("systemd", "python", "daemon", "sd_notify", "cython"),
+    keywords=["systemd", "python", "daemon", "sd_notify", "cython"],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",
