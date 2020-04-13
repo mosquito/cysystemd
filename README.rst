@@ -1,4 +1,4 @@
-SystemD wrapper on Cython
+SystemD wrapper in Cython
 =========================
 
 .. image:: https://img.shields.io/pypi/v/cysystemd.svg

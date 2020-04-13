@@ -1,6 +1,7 @@
 import logging
-from enum import Enum, unique
 from collections import namedtuple
+from enum import Enum, unique
+
 from ._daemon import sd_notify
 
 

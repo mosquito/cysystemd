@@ -2,11 +2,11 @@ import asyncio
 import logging
 from collections.abc import AsyncIterator
 from functools import partial
+from queue import Empty as QueueEmpty
 from uuid import UUID
 
-from .reader import JournalOpenMode, JournalReader, JournalEntry
+from .reader import JournalEntry, JournalOpenMode, JournalReader
 
-from queue import Empty as QueueEmpty
 
 try:
     from queue import SimpleQueue
@@ -25,8 +25,7 @@ class Base:
     async def _exec(self, func, *args, **kwargs):
         # noinspection PyTypeChecker
         return await self._loop.run_in_executor(
-            self._executor,
-            partial(func, *args, **kwargs)
+            self._executor, partial(func, *args, **kwargs)
         )
 
 
@@ -145,8 +144,7 @@ class AsyncJournalReader(Base):
 
     def __aiter__(self):
         return AsyncReaderIterator(
-            loop=self._loop, executor=self._executor,
-            reader=self.__reader
+            loop=self._loop, executor=self._executor, reader=self.__reader
         )
 
     async def next(self, skip=0):

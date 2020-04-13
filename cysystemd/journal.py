@@ -1,9 +1,10 @@
 import collections
-import uuid
 import logging
 import traceback
+import uuid
 from enum import IntEnum, unique
-from ._journal import syslog_priorities, send
+
+from ._journal import send, syslog_priorities
 
 
 _priorities = syslog_priorities()

@@ -1,5 +1,6 @@
+from setuptools import Extension, setup
+
 import cysystemd as module
-from setuptools import setup, Extension
 
 
 try:

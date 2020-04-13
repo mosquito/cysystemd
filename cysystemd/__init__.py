@@ -1,4 +1,4 @@
-package_info = "SystemD wrapper on Cython"
+package_info = "SystemD wrapper in Cython"
 version_info = (1, 3, 0)
 
 

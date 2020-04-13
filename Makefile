@@ -1,14 +1,15 @@
 CUR_DIR = $(shell pwd)
 EPOCH = $(shell date +%s)
 
-all: rpm_centos7 deb_debian8 deb_xenial deb_bionic
+all: rpm_centos7 deb_debian deb_ubuntu
 
 sdist:
 	python setup.py sdist
 
 images:
 	docker build -t cysystemd:centos7 --target centos7 .
-	docker build -t cysystemd:debian8 --target debian8 .
+	docker build -t cysystemd:debian9 --target debian9 .
+	docker build -t cysystemd:debian10 --target debian10 .
 	docker build -t cysystemd:xenial --target xenial .
 	docker build -t cysystemd:bionic --target bionic .
 
@@ -17,69 +18,83 @@ rpm_centos7: images sdist
 		-v $(CUR_DIR):/app \
 		--workdir /app/dist \
 		cysystemd:centos7 \
-		fpm --license "Apache 2" -d systemd-libs -d python -d python-enum34 \
+		fpm --license "Apache 2" -d systemd-libs -d python \
 			--rpm-dist centos7 \
 			--epoch $(EPOCH) \
+			--python-bin python2 --python-package-name-prefix python \
 			-f -s python -t rpm /app
 
 	docker run -i --rm \
 		-v $(CUR_DIR):/app \
 		--workdir /app/dist \
 		cysystemd:centos7 \
-		fpm --license "Apache 2" -d systemd-libs -d python34u \
+		fpm --license "Apache 2" -d systemd-libs -d python3 \
 			--rpm-dist centos7 \
 			--epoch $(EPOCH) \
-			--python-bin python3.4 --python-package-name-prefix python34u \
+			--python-bin python3.6 --python-package-name-prefix python3 \
 			-f -s python -t rpm /app
 
+deb_debian: deb_debian10 deb_debian9
+
+deb_debian9: images sdist
 	docker run -i --rm \
-		-v $(CUR_DIR):/app \
-		--workdir /app/dist \
-		cysystemd:centos7 \
-		fpm --license "Apache 2" -d systemd-libs -d python35u \
-			--rpm-dist centos7 \
-			--epoch $(EPOCH) \
-			--python-bin python3.5 --python-package-name-prefix python35u \
-			-f -s python -t rpm /app
+    		-v $(CUR_DIR):/app \
+    		--workdir /app/dist \
+    		cysystemd:debian9 \
+    		fpm --license "Apache 2" \
+    			-d libpython2.7 \
+    			-d libsystemd0 \
+    			-d python-enum34 \
+    			-d python-minimal \
+    			--iteration debian9 \
+    			--epoch $(EPOCH) \
+    			--python-install-lib /usr/lib/python2.7/dist-packages/ \
+    			-f -s python -t deb /app
 
 	docker run -i --rm \
 		-v $(CUR_DIR):/app \
 		--workdir /app/dist \
-		cysystemd:centos7 \
-		fpm --license "Apache 2" -d systemd-libs -d python36u \
-			--rpm-dist centos7 \
-			--epoch $(EPOCH) \
-			--python-bin python3.6 --python-package-name-prefix python36u \
-			-f -s python -t rpm /app
-
-deb_debian8: images sdist
-	docker run -i --rm \
-		-v $(CUR_DIR):/app \
-		--workdir /app/dist \
-		cysystemd:debian8 \
-		fpm --license "Apache 2" \
-			-d libpython2.7 \
-			-d libsystemd0 \
-			-d python-enum34 \
-			-d python-minimal \
-			--iteration debian8 \
-			--epoch $(EPOCH) \
-			--python-install-lib /usr/lib/python2.7/dist-packages/ \
-			-f -s python -t deb /app
-
-	docker run -i --rm \
-		-v $(CUR_DIR):/app \
-		--workdir /app/dist \
-		cysystemd:debian8 \
+		cysystemd:debian9 \
 		fpm --license "Apache 2" \
 			-d libsystemd0 \
 			-d libpython3.4 \
 			-d 'python3-minimal (>=3.4)' \
-			--iteration debian8 \
+			--iteration debian9 \
 			--epoch $(EPOCH) \
 			--python-bin python3 --python-package-name-prefix python3 \
 			--python-install-lib /usr/lib/python3.4/dist-packages/ \
 			-f -s python -t deb /app
+
+deb_debian10: images sdist
+	docker run -i --rm \
+        		-v $(CUR_DIR):/app \
+        		--workdir /app/dist \
+        		cysystemd:debian10 \
+        		fpm --license "Apache 2" \
+        			-d libpython2.7 \
+        			-d libsystemd0 \
+        			-d python-enum34 \
+        			-d python-minimal \
+        			--iteration debian10 \
+        			--epoch $(EPOCH) \
+        			--python-install-lib /usr/lib/python2.7/dist-packages/ \
+        			-f -s python -t deb /app
+
+	docker run -i --rm \
+		-v $(CUR_DIR):/app \
+		--workdir /app/dist \
+		cysystemd:debian10 \
+		fpm --license "Apache 2" \
+			-d libsystemd0 \
+			-d libpython3.4 \
+			-d 'python3-minimal (>=3.4)' \
+			--iteration debian10 \
+			--epoch $(EPOCH) \
+			--python-bin python3 --python-package-name-prefix python3 \
+			--python-install-lib /usr/lib/python3.4/dist-packages/ \
+			-f -s python -t deb /app
+
+deb_ubuntu: deb_xenial deb_bionic
 
 deb_xenial: images sdist
 	docker run -i --rm \
