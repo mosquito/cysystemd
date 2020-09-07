@@ -1,10 +1,15 @@
-import collections
 import logging
 import traceback
 import uuid
 from enum import IntEnum, unique
 
 from ._journal import send, syslog_priorities
+
+
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
 
 
 _priorities = syslog_priorities()
@@ -160,7 +165,7 @@ class JournaldLogHandler(logging.Handler):
         data["thread_name"] = data.pop("threadName")
 
         args = data.pop("args", [])
-        if isinstance(args, collections.Mapping):
+        if isinstance(args, Mapping):
             for key, value in args.items():
                 data["argument_%s" % key] = value
         else:
