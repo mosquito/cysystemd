@@ -35,7 +35,7 @@ cdef enum MATHCER_OPERATION:
 
 class MatchOperation(IntEnum):
     AND = MATHCER_OPERATION_CONJUNCTION
-    OR = MATHCER_OPERATION_DISJUNCTION
+    NOR = MATHCER_OPERATION_DISJUNCTION
 
 
 cdef extern from "<poll.h>":
@@ -491,7 +491,7 @@ cdef class JournalReader:
                 result = sd_journal_add_match(self.context, exp, 0)
                 check_error_code(result)
 
-                if operand == MatchOperation.OR:
+                if operand == MatchOperation.NOR:
                     result = sd_journal_add_disjunction(self.context)
                     return check_error_code(result)
 
