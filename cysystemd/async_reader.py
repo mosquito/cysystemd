@@ -134,52 +134,29 @@ class AsyncJournalReader(Base):
         return await self._exec(self.__reader.previous, skip)
 
     async def skip_previous(self, skip):
-        return self._exec(self.__reader.skip_previous, skip)
+        return await self._exec(self.__reader.skip_previous, skip)
 
     async def add_filter(self, rule):
-        return self._exec(self.__reader.add_filter, rule)
+        return await self._exec(self.__reader.add_filter, rule)
 
     async def clear_filter(self):
-        return self._exec(self.__reader.clear_filter)
+        return await self._exec(self.__reader.clear_filter)
 
-    def __aiter__(self):
-        return AsyncReaderIterator(
-            loop=self._loop, executor=self._executor, reader=self.__reader
-        )
+    async def __aiter__(self):
+        def read_entries():
+            for item in self.__reader:
+                asyncio.run_coroutine_threadsafe(queue.put(item), self._loop)
+
+            asyncio.run_coroutine_threadsafe(queue.put(None), self._loop)
+
+        queue = asyncio.Queue(1024)
+        self._loop.run_in_executor(self._executor, read_entries)
+        while True:
+            item = await queue.get()
+            if item is None:
+                break
+
+            yield item
 
     async def next(self, skip=0):
-        pass
-
-
-class AsyncReaderIterator(Base, AsyncIterator):
-    QUEUE_SIZE = 1024
-
-    def __init__(self, *, reader, loop: asyncio.AbstractEventLoop, executor):
-        super().__init__(loop=loop, executor=executor)
-        self.reader = reader
-        self.queue = SimpleQueue()
-        self.event = asyncio.Event()
-        self.lock = asyncio.Lock()
-        self.closed = False
-
-        self._loop.create_task(self._exec(self._reader))
-
-    def _reader(self):
-        for item in self.reader:
-            self.queue.put(item)
-            self._loop.call_soon_threadsafe(self.event.set)
-
-        self._loop.call_soon_threadsafe(self.event.set)
-        self.closed = True
-
-    async def __anext__(self) -> JournalEntry:
-        if self.closed:
-            raise StopAsyncIteration
-
-        async with self.lock:
-            while True:
-                try:
-                    return self.queue.get_nowait()
-                except QueueEmpty:
-                    await self.event.wait()
-                    self.event.clear()
+        return await self._exec(self.__reader.next, skip)
