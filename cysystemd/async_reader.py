@@ -158,6 +158,7 @@ class AsyncReaderIterator(Base, AsyncIterator):
     __slots__ = "reader", "queue", "queue_full", "event", "lock", "closed"
 
     QUEUE_SIZE = 1024
+    WRITE_EVENT_WAIT_TIME = 0.1
 
     def __init__(self, *, reader, loop, executor):
         super().__init__(loop=loop, executor=executor)
@@ -184,7 +185,9 @@ class AsyncReaderIterator(Base, AsyncIterator):
             for item in self.reader:
                 if len(self.queue) >= self.QUEUE_SIZE:
                     while True:
-                        if self.write_event.wait(timeout=0.1):
+                        if self.write_event.wait(
+                            timeout=self.WRITE_EVENT_WAIT_TIME
+                        ):
                             self.write_event.clear()
                             break
 

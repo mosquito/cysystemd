@@ -2,7 +2,7 @@ import asyncio
 import threading
 from collections import AsyncIterator, deque
 from concurrent.futures import Executor
-from typing import Coroutine, Any, Optional
+from typing import Coroutine, Any, Optional, Union
 from uuid import UUID
 
 from cysystemd.reader import (
@@ -101,6 +101,7 @@ class AsyncJournalReader(Base):
 
 class AsyncReaderIterator(Base, AsyncIterator):
     QUEUE_SIZE: int = 1024
+    WRITE_EVENT_WAIT_TIME: Union[float, int] = 0.1
     reader: JournalReader
     queue: deque
     lock: asyncio.Lock
