@@ -174,6 +174,7 @@ class AsyncReaderIterator(Base, AsyncIterator):
         self.close_event.set()
         self.write_event.set()
         self._loop.call_soon_threadsafe(self.read_event.set)
+        self._loop.call_soon_threadsafe(self.queue.clear)
 
     def __del__(self):
         self.close()
