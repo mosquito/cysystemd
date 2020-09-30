@@ -1,9 +1,10 @@
 #############################################
 FROM mosquito/fpm:centos7 as centos7
 
+RUN yum upgrade -y
 RUN yum install -y epel-release
 RUN yum install -y gcc python-pip python-devel systemd-devel && yum clean all
-RUN pip install -U setuptools
+RUN pip install -U "setuptools<40"
 RUN yum install -y \
     python3-pip python3-devel
 #############################################
