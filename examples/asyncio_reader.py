@@ -1,5 +1,4 @@
 import asyncio
-import json
 
 from cysystemd.async_reader import AsyncJournalReader
 from cysystemd.reader import JournalOpenMode
@@ -12,7 +11,7 @@ async def main():
 
     while await reader.wait():
         async for record in reader:
-            print(json.dumps(record.data, indent=1, sort_keys=True))
+            print(record.data["MESSAGE"])
 
 
 if __name__ == "__main__":
