@@ -145,6 +145,7 @@ class AsyncJournalReader(Base):
     def __aiter__(self):
         if self.__iterator is not None:
             self.__iterator.close()
+            self.__iterator = None
 
         iterator = AsyncReaderIterator(
             loop=self._loop, executor=self._executor, reader=self.__reader
