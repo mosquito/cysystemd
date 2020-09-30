@@ -3,4 +3,5 @@ recursive-exclude cysystemd *.pyc
 recursive-exclude __pycache__ *
 recursive-include cysystemd *.pyx *.pxd
 exclude .*
+include cysystemd/py.typed
 include README.md

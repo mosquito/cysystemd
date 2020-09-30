@@ -1,7 +1,7 @@
 CUR_DIR = $(shell pwd)
 EPOCH = $(shell date +%s)
 
-all: rpm_centos7 deb_debian deb_ubuntu
+all: rpm_centos7 deb_debian deb_ubuntu linux_wheel
 
 sdist:
 	python setup.py sdist
@@ -153,3 +153,11 @@ deb_bionic: images sdist
 			--epoch $(EPOCH) \
 			--python-install-lib /usr/lib/python3.6/dist-packages/ \
 			-f -s python -t deb /app
+
+linux_wheel:
+	docker run -it --rm \
+		-v `pwd`:/app/src:ro \
+		-v `pwd`/dist:/app/dst \
+		--entrypoint /bin/bash \
+		quay.io/pypa/manylinux2014_x86_64 \
+		/app/src/scripts/make-wheels.sh
