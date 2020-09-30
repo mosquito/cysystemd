@@ -172,6 +172,7 @@ class AsyncReaderIterator(Base, AsyncIterator):
     def close(self):
         self.close_event.set()
         self.write_event.set()
+        self._loop.call_soon_threadsafe(self.read_event.set)
 
     def __del__(self):
         self.close()
@@ -194,8 +195,7 @@ class AsyncReaderIterator(Base, AsyncIterator):
                 self.queue.append(item)
                 self._loop.call_soon_threadsafe(self.read_event.set)
         finally:
-            self.close_event.set()
-            self._loop.call_soon_threadsafe(self.read_event.set)
+            self.close()
 
     async def __anext__(self):
         async with self.lock:
