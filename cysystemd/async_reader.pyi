@@ -1,185 +1,119 @@
-import asyncio
-import logging
-from collections.abc import AsyncIterator
-from functools import partial
-from queue import Empty as QueueEmpty
+from asyncio import AbstractEventLoop, Lock, Event
+from collections import AsyncIterator
+from concurrent.futures import Executor
+from typing import Coroutine, Any, Optional
 from uuid import UUID
 
-from .reader import JournalEntry, JournalOpenMode, JournalReader
-
+from cysystemd.reader import (
+    JournalEntry,
+    JournalOpenMode,
+    JournalReader,
+    Poll,
+    Rule,
+)
 
 try:
     from queue import SimpleQueue
 except ImportError:
     from queue import Queue as SimpleQueue
 
-
-log = logging.getLogger("cysystemd.async_reader")
-
-
 class Base:
-    def __init__(self, loop: asyncio.AbstractEventLoop = None, executor=None):
-        self._executor = executor
-        self._loop = loop or asyncio.get_event_loop()
+    _loop: Optional[AbstractEventLoop]
+    _executor: Optional[Executor]
 
-    async def _exec(self, func, *args, **kwargs):
-        # noinspection PyTypeChecker
-        return await self._loop.run_in_executor(
-            self._executor, partial(func, *args, **kwargs)
-        )
+    def __init__(self, loop: AbstractEventLoop = None,
+                 executor: Optional[Executor] = None): ...
+
+    async def _exec(
+        self, func, *args, **kwargs
+    ) -> Coroutine[Any, Any, Any]: ...
 
 
 class AsyncJournalReader(Base):
-    def __init__(self, executor=None, loop: asyncio.AbstractEventLoop = None):
-        super().__init__(loop=loop, executor=executor)
-        self.__reader = JournalReader()
-        self.__flags = None
-        self.__wait_lock = asyncio.Lock()
+    __reader: JournalReader
+    __wait_lock: Lock
+    __flags: Optional[JournalOpenMode]
 
-    async def wait(self) -> bool:
-        async with self.__wait_lock:
-            loop = self._loop
-            reader = self.__reader
-            event = asyncio.Event()
+    async def wait(self) -> bool: ...
 
-            loop.add_reader(reader.fd, event.set)
+    def open(
+        self, flags: JournalOpenMode = JournalOpenMode.CURRENT_USER
+    ) -> Coroutine[Any, Any, None]: ...
 
-            try:
-                await event.wait()
-            finally:
-                loop.remove_reader(reader.fd)
+    def open_directory(self, path) -> Coroutine[Any, Any, None]: ...
 
-            reader.process_events()
-
-        return True
-
-    def open(self, flags=JournalOpenMode.CURRENT_USER):
-        self.__flags = flags
-        return self._exec(self.__reader.open, flags=flags)
-
-    def open_directory(self, path):
-        return self._exec(self.__reader.open_directory, path)
-
-    def open_files(self, *file_names):
-        return self._exec(self.__reader.open_files, *file_names)
+    def open_files(self, *file_names) -> Coroutine[Any, Any, None]: ...
 
     @property
-    def data_threshold(self):
-        return self.__reader.data_threshold
+    def data_threshold(self) -> int: ...
 
     @data_threshold.setter
-    def data_threshold(self, size):
-        self.__reader.data_threshold = size
+    def data_threshold(self, size: int): ...
 
     @property
-    def closed(self) -> bool:
-        return self.__reader.closed
+    def closed(self) -> bool: ...
 
     @property
-    def locked(self) -> bool:
-        return self.__reader.locked
+    def locked(self) -> bool: ...
 
     @property
-    def idle(self) -> bool:
-        return self.__reader.idle
+    def idle(self) -> bool: ...
 
-    def seek_head(self):
-        return self._exec(self.__reader.seek_head)
+    def seek_head(self) -> Coroutine[Any, Any, bool]: ...
 
-    def __repr__(self):
-        return "<%s[%s]: %s>" % (
-            self.__class__.__name__,
-            self.__flags,
-            "closed" if self.closed else "opened",
-        )
+    def __repr__(self) -> str: ...
 
     @property
-    def fd(self):
-        return self.__reader.fd
+    def fd(self) -> int: ...
 
     @property
-    def events(self):
-        return self.__reader.events
+    def events(self) -> Poll: ...
 
     @property
-    def timeout(self):
-        return self.__reader.timeout
+    def timeout(self) -> int: ...
 
-    def get_catalog(self):
-        return self._exec(self.__reader.get_catalog)
+    def get_catalog(self) -> Coroutine[Any, Any, bytes]: ...
 
-    def get_catalog_for_message_id(self, message_id):
-        return self._exec(
-            self.__reader.get_catalog_for_message_id, message_id
-        )
+    def get_catalog_for_message_id(
+        self, message_id: UUID
+    ) -> Coroutine[Any, Any, bytes]: ...
 
-    def seek_tail(self):
-        return self._exec(self.__reader.seek_tail)
+    def seek_tail(self) -> Coroutine[Any, Any, bool]: ...
 
-    def seek_monotonic_usec(self, boot_id: UUID, usec):
-        return self._exec(
-            self.__reader.seek_monotonic_usec, boot_id, usec
-        )
+    def seek_monotonic_usec(self, boot_id: UUID, usec: int) -> Coroutine[Any, Any, bool]: ...
 
-    def seek_realtime_usec(self, usec):
-        return self._exec(self.__reader.seek_realtime_usec, usec)
+    def seek_realtime_usec(self, usec: int) -> Coroutine[Any, Any, bool]: ...
 
-    def seek_cursor(self, cursor):
-        return self._exec(self.__reader.seek_cursor, cursor)
+    def seek_cursor(self, cursor) -> Coroutine[Any, Any, bool]: ...
 
-    def skip_next(self, skip):
-        return self._exec(self.__reader.skip_next, skip)
+    def skip_next(self, skip: int) -> Coroutine[Any, Any, int]: ...
 
-    def previous(self, skip=0):
-        return self._exec(self.__reader.previous, skip)
+    def skip_previous(self, skip) -> Coroutine[Any, Any, int]: ...
 
-    def skip_previous(self, skip):
-        return self._exec(self.__reader.skip_previous, skip)
+    def next(self, skip: int = 0) -> Coroutine[Any, Any, JournalEntry]: ...
 
-    def add_filter(self, rule):
-        return self._exec(self.__reader.add_filter, rule)
+    def previous(self, skip: int = 0) -> Coroutine[Any, Any, JournalEntry]: ...
 
-    def clear_filter(self):
-        return self._exec(self.__reader.clear_filter)
+    def add_filter(self, rule: Rule) -> Coroutine[Any, Any, int]: ...
 
-    def next(self, skip=0):
-        return self._exec(self.__reader.next, skip)
+    def clear_filter(self) -> Coroutine[Any, Any, None]: ...
 
-    def __aiter__(self):
-        return AsyncReaderIterator(
-            loop=self._loop, executor=self._executor, reader=self.__reader
-        )
+    def __aiter__(self) -> AsyncReaderIterator: ...
 
 
 class AsyncReaderIterator(Base, AsyncIterator):
-    QUEUE_SIZE = 1024
+    QUEUE_SIZE: int = 1024
+    _loop: Optional[AbstractEventLoop]
+    reader: JournalReader
+    queue: SimpleQueue
+    closed: bool
+    lock: Lock
+    event: Event
 
-    def __init__(self, *, reader, loop: asyncio.AbstractEventLoop, executor):
-        super().__init__(loop=loop, executor=executor)
-        self.reader = reader
-        self.queue = SimpleQueue()
-        self.event = asyncio.Event()
-        self.lock = asyncio.Lock()
-        self.closed = False
+    # noinspection PyMissingConstructor
+    def __init__(self, *, reader: JournalReader,
+                 loop: AbstractEventLoop, executor: Optional[Executor]): ...
 
-        self._loop.create_task(self._exec(self._reader))
+    def _reader(self) -> None: ...
 
-    def _reader(self):
-        for item in self.reader:
-            self.queue.put(item)
-            self._loop.call_soon_threadsafe(self.event.set)
-
-        self._loop.call_soon_threadsafe(self.event.set)
-        self.closed = True
-
-    async def __anext__(self) -> JournalEntry:
-        if self.closed:
-            raise StopAsyncIteration
-
-        async with self.lock:
-            while True:
-                try:
-                    return self.queue.get_nowait()
-                except QueueEmpty:
-                    await self.event.wait()
-                    self.event.clear()
+    async def __anext__(self) -> JournalEntry: ...

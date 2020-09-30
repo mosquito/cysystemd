@@ -18,7 +18,7 @@ log = logging.getLogger("cysystemd.async_reader")
 
 
 class Base:
-    def __init__(self, loop: asyncio.AbstractEventLoop = None, executor=None):
+    def __init__(self, loop=None, executor=None):
         self._executor = executor
         self._loop = loop or asyncio.get_event_loop()
 
@@ -30,13 +30,13 @@ class Base:
 
 
 class AsyncJournalReader(Base):
-    def __init__(self, executor=None, loop: asyncio.AbstractEventLoop = None):
+    def __init__(self, executor=None, loop=None):
         super().__init__(loop=loop, executor=executor)
         self.__reader = JournalReader()
         self.__flags = None
         self.__wait_lock = asyncio.Lock()
 
-    async def wait(self) -> bool:
+    async def wait(self):
         async with self.__wait_lock:
             loop = self._loop
             reader = self.__reader
