@@ -72,15 +72,15 @@ class AsyncJournalReader(Base):
         self.__reader.data_threshold = size
 
     @property
-    def closed(self):
+    def closed(self) -> bool:
         return self.__reader.closed
 
     @property
-    def locked(self):
+    def locked(self) -> bool:
         return self.__reader.locked
 
     @property
-    def idle(self):
+    def idle(self) -> bool:
         return self.__reader.idle
 
     def seek_head(self):
@@ -152,11 +152,9 @@ class AsyncJournalReader(Base):
 
 
 class AsyncReaderIterator(Base, AsyncIterator):
-    __slots__ = "reader", "queue", "event", "lock", "closed"
-
     QUEUE_SIZE = 1024
 
-    def __init__(self, *, reader, loop, executor):
+    def __init__(self, *, reader, loop: asyncio.AbstractEventLoop, executor):
         super().__init__(loop=loop, executor=executor)
         self.reader = reader
         self.queue = SimpleQueue()
@@ -174,7 +172,7 @@ class AsyncReaderIterator(Base, AsyncIterator):
         self._loop.call_soon_threadsafe(self.event.set)
         self.closed = True
 
-    async def __anext__(self):
+    async def __anext__(self) -> JournalEntry:
         if self.closed:
             raise StopAsyncIteration
 
