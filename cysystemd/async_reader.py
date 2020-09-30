@@ -5,7 +5,6 @@ from collections import deque
 
 from collections.abc import AsyncIterator
 from functools import partial
-from queue import Empty as QueueEmpty, Full, Queue
 from uuid import UUID
 
 from .reader import JournalOpenMode, JournalReader
