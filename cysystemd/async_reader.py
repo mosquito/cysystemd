@@ -1,17 +1,14 @@
 import asyncio
 import logging
+import threading
+from collections import deque
+
 from collections.abc import AsyncIterator
 from functools import partial
-from queue import Empty as QueueEmpty
+from queue import Empty as QueueEmpty, Full, Queue
 from uuid import UUID
 
-from .reader import JournalEntry, JournalOpenMode, JournalReader
-
-
-try:
-    from queue import SimpleQueue
-except ImportError:
-    from queue import Queue as SimpleQueue
+from .reader import JournalOpenMode, JournalReader
 
 
 log = logging.getLogger("cysystemd.async_reader")
@@ -35,6 +32,7 @@ class AsyncJournalReader(Base):
         self.__reader = JournalReader()
         self.__flags = None
         self.__wait_lock = asyncio.Lock()
+        self.__iterator = None
 
     async def wait(self):
         async with self.__wait_lock:
@@ -146,42 +144,70 @@ class AsyncJournalReader(Base):
         return self._exec(self.__reader.next, skip)
 
     def __aiter__(self):
-        return AsyncReaderIterator(
+        if self.__iterator is not None:
+            self.__iterator.close()
+
+        iterator = AsyncReaderIterator(
             loop=self._loop, executor=self._executor, reader=self.__reader
         )
+        self.__iterator = iterator
+        return iterator
 
 
 class AsyncReaderIterator(Base, AsyncIterator):
-    __slots__ = "reader", "queue", "event", "lock", "closed"
+    __slots__ = "reader", "queue", "queue_full", "event", "lock", "closed"
 
     QUEUE_SIZE = 1024
 
     def __init__(self, *, reader, loop, executor):
         super().__init__(loop=loop, executor=executor)
-        self.reader = reader
-        self.queue = SimpleQueue()
-        self.event = asyncio.Event()
         self.lock = asyncio.Lock()
-        self.closed = False
+        self.queue = deque()
+        self.reader = reader
+        self.read_event = asyncio.Event()
+        self.write_event = threading.Event()
+        self.close_event = threading.Event()
 
-        self._loop.create_task(self._exec(self._reader))
+        self._loop.create_task(self._exec(self._journal_reader))
 
-    def _reader(self):
-        for item in self.reader:
-            self.queue.put(item)
-            self._loop.call_soon_threadsafe(self.event.set)
+    def close(self):
+        self.close_event.set()
+        self.write_event.set()
 
-        self._loop.call_soon_threadsafe(self.event.set)
-        self.closed = True
+    def __del__(self):
+        self.close()
+
+    def _journal_reader(self):
+        try:
+            for item in self.reader:
+                if len(self.queue) >= self.QUEUE_SIZE:
+                    while True:
+                        if self.write_event.wait(timeout=0.1):
+                            self.write_event.clear()
+                            break
+
+                        if self.close_event.is_set():
+                            return
+
+                if self.close_event.is_set():
+                    return
+
+                self.queue.append(item)
+                self._loop.call_soon_threadsafe(self.read_event.set)
+        finally:
+            self.close_event.set()
+            self._loop.call_soon_threadsafe(self.read_event.set)
 
     async def __anext__(self):
-        if self.closed:
-            raise StopAsyncIteration
-
         async with self.lock:
             while True:
                 try:
-                    return self.queue.get_nowait()
-                except QueueEmpty:
-                    await self.event.wait()
-                    self.event.clear()
+                    item = self.queue.popleft()
+                    return item
+                except IndexError:
+                    if self.close_event.is_set():
+                        raise StopAsyncIteration
+
+                    await self.read_event.wait()
+                    self.read_event.clear()
+                    self.write_event.set()

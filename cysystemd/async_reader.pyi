@@ -1,5 +1,6 @@
-from asyncio import AbstractEventLoop, Lock, Event
-from collections import AsyncIterator
+import asyncio
+import threading
+from collections import AsyncIterator, deque
 from concurrent.futures import Executor
 from typing import Coroutine, Any, Optional
 from uuid import UUID
@@ -12,16 +13,12 @@ from cysystemd.reader import (
     Rule,
 )
 
-try:
-    from queue import SimpleQueue
-except ImportError:
-    from queue import Queue as SimpleQueue
 
 class Base:
-    _loop: Optional[AbstractEventLoop]
+    _loop: Optional[asyncio.AbstractEventLoop]
     _executor: Optional[Executor]
 
-    def __init__(self, loop: AbstractEventLoop = None,
+    def __init__(self, loop: asyncio.AbstractEventLoop = None,
                  executor: Optional[Executor] = None): ...
 
     async def _exec(
@@ -31,8 +28,9 @@ class Base:
 
 class AsyncJournalReader(Base):
     __reader: JournalReader
-    __wait_lock: Lock
+    __wait_lock: asyncio.Lock
     __flags: Optional[JournalOpenMode]
+    __iterator: Optional["AsyncReaderIterator"]
 
     async def wait(self) -> bool: ...
 
@@ -103,17 +101,17 @@ class AsyncJournalReader(Base):
 
 class AsyncReaderIterator(Base, AsyncIterator):
     QUEUE_SIZE: int = 1024
-    _loop: Optional[AbstractEventLoop]
     reader: JournalReader
-    queue: SimpleQueue
-    closed: bool
-    lock: Lock
-    event: Event
+    queue: deque
+    lock: asyncio.Lock
+    read_event: asyncio.Event
+    write_event: threading.Event
+    close_event: threading.Event
 
     # noinspection PyMissingConstructor
     def __init__(self, *, reader: JournalReader,
-                 loop: AbstractEventLoop, executor: Optional[Executor]): ...
+                 loop: asyncio.AbstractEventLoop, executor: Optional[Executor]): ...
 
-    def _reader(self) -> None: ...
+    def _journal_reader(self) -> None: ...
 
     async def __anext__(self) -> JournalEntry: ...
