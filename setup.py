@@ -57,6 +57,7 @@ setup(
     ext_modules=extensions,
     version=module.__version__,
     packages=["cysystemd",],
+    package_data={"cysystemd": ["py.typed"]},
     license=module.license,
     description=module.package_info,
     long_description=open("README.rst").read(),
