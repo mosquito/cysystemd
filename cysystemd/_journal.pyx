@@ -1,4 +1,4 @@
-from cpython.mem cimport PyMem_PyMem_Malloc, PyMem_PyMem_Free
+from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.string cimport memcpy
 from sd_journal cimport sd_journal_sendv, prioritynames, CODE, iovec
 
