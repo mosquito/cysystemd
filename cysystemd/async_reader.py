@@ -2,16 +2,9 @@ import asyncio
 import logging
 from collections.abc import AsyncIterator
 from functools import partial
-from queue import Empty as QueueEmpty
 from uuid import UUID
 
-from .reader import JournalEntry, JournalOpenMode, JournalReader
-
-
-try:
-    from queue import SimpleQueue
-except ImportError:
-    from queue import Queue as SimpleQueue
+from .reader import JournalOpenMode, JournalReader
 
 
 log = logging.getLogger("cysystemd.async_reader")
@@ -156,7 +149,7 @@ class AsyncJournalReader(Base):
 
 
 class AsyncReaderIterator(Base, AsyncIterator):
-    __slots__ = "reader", "queue", "event", "lock", "closed"
+    __slots__ = "reader", "queue", "closed"
 
     QUEUE_SIZE = 1024
 
