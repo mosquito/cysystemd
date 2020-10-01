@@ -8,7 +8,8 @@ from cysystemd.reader import JournalOpenMode
 async def main():
     reader = AsyncJournalReader()
     await reader.open(JournalOpenMode.SYSTEM)
-    await reader.seek_tail()
+    await reader.seek_head()
+    # await reader.previous(10)
 
     while await reader.wait():
         async for record in reader:

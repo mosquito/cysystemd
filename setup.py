@@ -90,5 +90,4 @@ setup(
         "Topic :: System",
         "Topic :: System :: Operating System",
     ],
-    extras_require={':python_version < "3.4"': "enum34",},
 )

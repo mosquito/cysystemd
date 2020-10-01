@@ -434,13 +434,7 @@ cdef class JournalReader:
         return JournalEvent(check_error_code(result))
 
     def __iter__(self):
-        return self
-
-    def __next__(self):
-        result = self.next()
-        if result is None:
-            raise StopIteration
-        return result
+        return iter(self.next, None)
 
     def next(self, uint64_t skip=0):
         cdef int result
