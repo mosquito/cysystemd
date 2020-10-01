@@ -157,15 +157,15 @@ class AsyncReaderIterator(Base, AsyncIterator):
         super().__init__(loop=loop, executor=executor)
         self.reader = reader
         self.queue = asyncio.Queue(self.QUEUE_SIZE)
-        self._loop.create_task(self._exec(self._reader))
+        self._loop.run_in_executor(self._executor, self._reader)
         self.closed = False
 
     def _reader(self):
         for item in self.reader:
-            asyncio.run_coroutine_threadsafe(self.queue.put(item), self._loop)
+            asyncio.run_coroutine_threadsafe(self.queue.put(item), self._loop).result()
 
         self.closed = True
-        asyncio.run_coroutine_threadsafe(self.queue.put(None), self._loop)
+        asyncio.run_coroutine_threadsafe(self.queue.put(None), self._loop).result()
 
     async def __anext__(self):
         if self.closed:
