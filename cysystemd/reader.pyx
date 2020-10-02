@@ -253,11 +253,11 @@ cdef class JournalEntry:
     def cursor(self):
         return self.cursor
 
-    cpdef float get_realtime_sec(self):
-        return self.realtime_usec / 1000000
+    def get_realtime_sec(self):
+        return self.realtime_usec / 1000000.
 
-    cpdef float get_monotonic_sec(self):
-        return self.monotonic_usec / 1000000
+    def get_monotonic_sec(self):
+        return self.monotonic_usec / 1000000.
 
     cpdef uint64_t get_realtime_usec(self):
         return self.realtime_usec
