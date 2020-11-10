@@ -28,14 +28,14 @@ class JournalEvent(IntEnum):
     INVALIDATE =  SD_JOURNAL_INVALIDATE
 
 
-cdef enum MATHCER_OPERATION:
-    MATHCER_OPERATION_CONJUNCTION,
-    MATHCER_OPERATION_DISJUNCTION,
+cdef enum MATCHER_OPERATION:
+    MATCHER_OPERATION_CONJUNCTION,
+    MATCHER_OPERATION_DISJUNCTION,
 
 
 class MatchOperation(IntEnum):
-    AND = MATHCER_OPERATION_CONJUNCTION
-    NOR = MATHCER_OPERATION_DISJUNCTION
+    AND = MATCHER_OPERATION_CONJUNCTION
+    OR = MATCHER_OPERATION_DISJUNCTION
 
 
 cdef extern from "<poll.h>":
@@ -485,7 +485,7 @@ cdef class JournalReader:
                 result = sd_journal_add_match(self.context, exp, 0)
                 check_error_code(result)
 
-                if operand == MatchOperation.NOR:
+                if operand == MatchOperation.OR:
                     result = sd_journal_add_disjunction(self.context)
                     return check_error_code(result)
 
