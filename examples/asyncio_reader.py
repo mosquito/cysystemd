@@ -11,6 +11,11 @@ async def main():
     await reader.seek_head()
     # await reader.previous(10)
 
+    # read all from cursor immediately
+    async for record in reader:
+        print(json.dumps(record.data, indent=1, sort_keys=True))
+
+    # waiting for new events and print them
     while await reader.wait():
         async for record in reader:
             print(json.dumps(record.data, indent=1, sort_keys=True))
