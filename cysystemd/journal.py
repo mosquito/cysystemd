@@ -142,7 +142,7 @@ class JournaldLogHandler(logging.Handler):
         }
         data["message"] = self.format(record)
         data["priority"] = self.LEVELS[data.pop("levelno")]
-        data["syslog_facility"] = self.__facility
+        data["syslog_facility"] = self.__facility.value
 
         data["code_file"] = data.pop("filename")
         data["code_line"] = data.pop("lineno")
