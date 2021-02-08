@@ -32,5 +32,5 @@ deploy:
   file_glob: true
   skip_cleanup: true
   on:
-    repo: greut/cysystemd
+    repo: mosquito/cysystemd
     tags: true
