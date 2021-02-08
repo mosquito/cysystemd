@@ -23,4 +23,4 @@ addons:
       - libsystemd-dev
 
 script:
-  - pip wheel ./src -f ./src
+  - pip wheel
