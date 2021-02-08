@@ -27,10 +27,10 @@ script:
 
 deploy:
   provider: releases
-  api_key:
-    secure: JogX5r08wMWxsuTR/m3Vjsk2Z3A4uj0y0/jNhRQzOcXLlbvNG+UeZVD69feRDVqDPECCHL+xOVDFb0W6DjmXntH6YcxUBY7HN14XuAaZvhMH48uL1hdDumkZz8V71DYy9Bg9+VEFP0eeO/nIN5zX+JT0zRGfrEE2VxevUedfGbclO1gSHw5viW6zqPF9/z7e/GdwNJ5SWNGmwGPOfjK5gUqanon1kWJ584am58vQbjCsmC3Tyy7pPDnolfTSzWI3U/1OaHYsu3dm/dVpaUG45cDOeoE5EMiBIA52O2oz/Qjt7yShzpLsfEmZZcyRNJJSI7mO1goQVlwJU9b1cV+2l8eH5AAqUvWaVjIdZllFXlnV9VxYBrTqg+2DiiKXzcpVk7XsAzZp34vKrnBxrBfhaKS5BwJ+VijNHkGYlwQdPC3mh1dVRbyzXKCLjbX/I0X76iSEypkVRDbM3ljv5oxuqmb5c9TsRUlSZ5nVBvfquw5mRBxqF2yWWGBYGey6qqu6tovTCeR4V8LiU/O0dWSLf5PUsxnW2iuulNOtg9r0MbNVFca5Rhg2JmndHKFudJjLwx5+1ZOaVBnWZTpYCBoyNtlrVzSWuCNKbaOc0tN/+nGoXKH6KL95lr1bgRHY0K3WzsfSqwo1RYGPVnk5QB/VkMWS6ZCKZpjOANgWOqeUQEs=
+  api_key: $GITHUB_TOKEN
   file: dist/*.whl
   file_glob: true
   skip_cleanup: true
   on:
+    repo: greut/cysystemd
     tags: true
