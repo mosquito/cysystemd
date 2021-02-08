@@ -1,0 +1,20 @@
+language: python
+
+arch:
+  - amd64
+  - arm64
+
+cache: apt
+
+compiler:
+  - gcc
+
+os: linux
+
+addons:
+  apt:
+    packages:
+      - libsystemd-dev
+
+script:
+  - make linux_wheel
