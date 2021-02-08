@@ -1,0 +1,36 @@
+language: python
+
+python:
+  - "3.6"
+  - "3.7"
+  - "3.8"
+  - "3.9"
+
+arch:
+  - amd64
+  - arm64
+
+cache: apt
+
+compiler:
+  - gcc
+
+os: linux
+
+addons:
+  apt:
+    packages:
+      - libsystemd-dev
+
+script:
+  - pip wheel cysystemd -w dist
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file: dist/*.whl
+  file_glob: true
+  skip_cleanup: true
+  on:
+    repo: mosquito/cysystemd
+    tags: true
