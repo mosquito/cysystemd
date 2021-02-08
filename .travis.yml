@@ -22,8 +22,5 @@ addons:
     packages:
       - libsystemd-dev
 
-install:
-  - pip install wheel
-
 script:
-  - python setup.py bdist_wheel
+  - pip wheel cysystemd
