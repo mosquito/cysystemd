@@ -1,5 +1,11 @@
 language: python
 
+python:
+  - "3.6"
+  - "3.7"
+  - "3.8"
+  - "3.9"
+
 arch:
   - amd64
   - arm64
@@ -17,4 +23,4 @@ addons:
       - libsystemd-dev
 
 script:
-  - make linux_wheel
+  - pip wheel ./src -f ./src
