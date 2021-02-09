@@ -2,6 +2,9 @@ on:
   push:
     tags:
       - '*.*.*'
+  pull_request:
+    branches:
+      - master
 
 name: Build binary packages
 
