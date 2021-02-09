@@ -3,12 +3,9 @@ set -ex
 SRC=/app/src
 DST=/app/dst
 
-yum install -y systemd-devel
-
 function build_wheel() {
 	/opt/python/$1/bin/pip wheel ${SRC} -f ${SRC} -w ${DST}
 }
-
 
 build_wheel cp35-cp35m
 build_wheel cp36-cp36m

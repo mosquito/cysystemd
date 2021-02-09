@@ -1,0 +1,24 @@
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+name: Build binary packages
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build packages
+        run: make linux_wheel
+
+      - name: Create Release
+        with:
+          artifacts: "dist/*"
+          token: ${{ secrets.GITHUB_TOKEN }}

@@ -38,3 +38,5 @@ RUN apt-get update && apt-get install -y \
 RUN pip install -U "setuptools<40"
 RUN pip3 install -U setuptools
 #############################################
+FROM quay.io/pypa/manylinux2014_x86_64 as manylinux
+RUN yum install -y systemd-devel
