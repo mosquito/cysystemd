@@ -60,7 +60,7 @@ class Facility(IntEnum):
 
 
 def write(message, priority=Priority.INFO):
-    """ Write message into systemd journal 
+    """ Write message into systemd journal
     :type priority: Priority
     :type message: str
     """
@@ -92,7 +92,7 @@ class JournaldLogHandler(logging.Handler):
         """
         logging.Handler.__init__(self)
         self.__identifier = identifier
-        self.__facility = Facility(int(facility)).value
+        self.__facility = int(facility)
 
     @staticmethod
     def _to_microsecond(ts):
