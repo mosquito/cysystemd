@@ -23,8 +23,9 @@ addons:
       - libsystemd-dev
 
 script:
-  - pip install cython
-  - pip wheel . -w dist
+  - pip install cython auditwheel
+  - pip wheel . -w .
+  - auditwheel repair *.whl -w dist/
 
 deploy:
   provider: releases
