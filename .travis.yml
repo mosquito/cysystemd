@@ -21,9 +21,10 @@ addons:
   apt:
     packages:
       - libsystemd-dev
+      - cython3
 
 script:
-  - pip wheel cysystemd -w dist
+  - pip wheel . -w dist
 
 deploy:
   provider: releases
