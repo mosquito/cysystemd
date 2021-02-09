@@ -27,10 +27,8 @@ RUN pip3 install -U setuptools
 FROM mosquito/fpm:xenial as xenial
 
 RUN apt-get update && apt-get install -y \
-    gcc python-pip python3-pip python-dev \
-    libsystemd-dev python3-dev
+    gcc python-pip python-dev libsystemd-dev
 RUN pip install -U "setuptools<40"
-RUN pip3 install -U setuptools
 #############################################
 FROM mosquito/fpm:bionic as bionic
 

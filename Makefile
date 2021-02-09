@@ -111,20 +111,6 @@ deb_xenial: images sdist
 			--epoch $(EPOCH) \
 			-f -s python -t deb /app
 
-	docker run -i --rm \
-		-v $(CUR_DIR):/app \
-		--workdir /app/dist \
-		cysystemd:xenial \
-		fpm --license "Apache 2" \
-			-d libsystemd0 \
-			-d 'python3-minimal (>=3.4)' \
-			-d libpython3.4 \
-			--python-install-lib /usr/lib/python3.4/dist-packages/ \
-			--python-bin python3 --python-package-name-prefix python3 \
-			--iteration xenial \
-			--epoch $(EPOCH) \
-			-f -s python -t deb /app
-
 deb_bionic: images sdist
 	docker run -i --rm \
 		-v $(CUR_DIR):/app \
