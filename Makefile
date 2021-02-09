@@ -12,7 +12,6 @@ images:
 	docker build -t cysystemd:debian10 --target debian10 .
 	docker build -t cysystemd:xenial --target xenial .
 	docker build -t cysystemd:bionic --target bionic .
-	docker build -t cysystemd:manylinux --target manylinux .
 
 rpm_centos7: images sdist
 	docker run -i --rm \
@@ -141,10 +140,13 @@ deb_bionic: images sdist
 			--python-install-lib /usr/lib/python3.6/dist-packages/ \
 			-f -s python -t deb /app
 
-linux_wheel: images
+wheel_images:
+	docker build -t cysystemd:manylinux --target manylinux .
+
+linux_wheel: wheel_images
 	docker run -it --rm \
-		-v `pwd`:/app/src:ro \
-		-v `pwd`/dist:/app/dst \
+		-v $(shell pwd):/app/src:ro \
+		-v $(shell pwd)/dist:/app/dst \
 		--entrypoint /bin/bash \
 		cysystemd:manylinux \
 		/app/src/scripts/make-wheels.sh
