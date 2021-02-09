@@ -19,6 +19,7 @@ jobs:
         run: make linux_wheel
 
       - name: Create Release
+        uses: ncipollo/release-action@v1
         with:
           artifacts: "dist/*"
           token: ${{ secrets.GITHUB_TOKEN }}
