@@ -18,8 +18,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Test docker
-        run: docker ps
+      - name: Build packages
+        run: make
 
 #      - name: Set up Docker Buildx
 #        id: buildx
