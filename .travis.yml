@@ -1,15 +1,5 @@
 language: python
 
-python:
-  - "3.6"
-  - "3.7"
-  - "3.8"
-  - "3.9"
-
-arch:
-  - amd64
-  - arm64
-
 cache: apt
 
 compiler:
@@ -17,15 +7,50 @@ compiler:
 
 os: linux
 
+jobs:
+  include:
+    - python: "3.6"
+      arch: amd64
+      env: WHEEL_PLATFORM=linux_x86_64
+
+    - python: "3.6"
+      arch: arm64
+      env: WHEEL_PLATFORM=linux_aarch64
+
+    - python: "3.7"
+      arch: amd64
+      env: WHEEL_PLATFORM=linux_x86_64
+
+    - python: "3.7"
+      arch: arm64
+      env: WHEEL_PLATFORM=linux_aarch64
+
+    - python: "3.8"
+      arch: amd64
+      env: WHEEL_PLATFORM=linux_x86_64
+
+    - python: "3.8"
+      arch: arm64
+      env: WHEEL_PLATFORM=linux_aarch64
+
+    - python: "3.9"
+      arch: amd64
+      env: WHEEL_PLATFORM=linux_x86_64
+
+    - python: "3.9"
+      arch: arm64
+      env: WHEEL_PLATFORM=linux_aarch64
+
 addons:
   apt:
     packages:
       - libsystemd-dev
+      - patchelf
 
 script:
   - pip install cython auditwheel
-  - pip wheel . -w .
-  - auditwheel repair *.whl -w dist/
+  - pip wheel . -w temp
+  - auditwheel repair --plat $WHEEL_PLATFORM temp/*.whl -w dist/
 
 deploy:
   provider: releases
