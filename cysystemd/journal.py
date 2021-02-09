@@ -92,7 +92,7 @@ class JournaldLogHandler(logging.Handler):
         """
         logging.Handler.__init__(self)
         self.__identifier = identifier
-        self.__facility = Facility(int(facility))
+        self.__facility = Facility(int(facility)).value
 
     @staticmethod
     def _to_microsecond(ts):
