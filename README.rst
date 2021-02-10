@@ -27,7 +27,13 @@ Installation
 All packages available on
 `github releases <https://github.com/mosquito/cysystemd/releases>`_.
 
+Installation from binary wheels
++++++++++++++++++++++++++++++++
+
+* wheels is now available for Python 3.6, 3.7, 3.8, 3.9 for `x86_64` and `arm64`
+
 .. code-block:: bash
+
    pythonn3.9 -m pip install \
       https://github.com/mosquito/cysystemd/releases/download/1.4.8/cysystemd-1.4.8-cp39-cp39-manylinux2014_x86_64.whl
 
