@@ -27,53 +27,9 @@ Installation
 All packages available on
 `github releases <https://github.com/mosquito/cysystemd/releases>`_.
 
-
-Debian/Ubuntu
-+++++++++++++
-
-Install repository key
-
 .. code-block:: bash
-
-   wget -qO - 'https://bintray.com/user/downloadSubjectPublicKey?username=bintray' | \
-      apt-key add -
-
-
-Install the repository file
-
-Debian Jessie:
-
-.. code-block:: bash
-
-   echo "deb http://dl.bintray.com/mosquito/cysystemd jessie main" > /etc/apt/sources.list.d/cysystemd.list
-   apt-get update
-   apt-get install python-cysystemd python3-cysystemd
-
-Ubuntu Xenial:
-
-.. code-block:: bash
-
-   echo "deb http://dl.bintray.com/mosquito/cysystemd xenial main" > /etc/apt/sources.list.d/cysystemd.list
-   apt-get update
-   apt-get install python-cysystemd python3-cysystemd
-
-Ubuntu Bionic:
-
-.. code-block:: bash
-
-   echo "deb http://dl.bintray.com/mosquito/cysystemd bionic main" > /etc/apt/sources.list.d/cysystemd.list
-   apt-get update
-   apt-get install python-cysystemd python3-cysystemd
-
-
-Centos 7
-++++++++
-
-.. code-block:: bash
-
-   yum localinstall \
-      https://github.com/mosquito/cysystemd/releases/download/0.17.1/python-cysystemd-0.17.1-1.centos7.x86_64.rpm
-
+   pythonn3.9 -m pip install \
+      https://github.com/mosquito/cysystemd/releases/download/1.4.8/cysystemd-1.4.8-cp39-cp39-manylinux2014_x86_64.whl
 
 Installation from sources
 +++++++++++++++++++++++++
