@@ -42,16 +42,17 @@ Installation from sources
 
 You should install systemd headers
 
-For debian users:
-
+For Debian/Ubuntu users:
 
 .. code-block:: bash
 
-    apt-get install build-essential \
-        libsystemd-journal-dev \
-        libsystemd-daemon-dev \
-        libsystemd-dev
+    apt install build-essential libsystemd-dev
 
+On older versions of Debian/Ubuntu, you might also need to install:
+
+.. code-block:: bash
+
+    apt install libsystemd-daemon-dev libsystemd-journal-dev
 
 For CentOS/RHEL
 
