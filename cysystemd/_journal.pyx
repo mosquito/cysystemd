@@ -37,6 +37,9 @@ cpdef _send(kwargs):
                 'Key name must be consist only of characters, '
                 'numbers and underscores'
             )
+        elif key == 'PRIORITY' and isinstance(value, int):
+            # Serialize int subclasses (like IntEnum) to plain int
+            value = int(value)
 
         items.append((key, value))
 
