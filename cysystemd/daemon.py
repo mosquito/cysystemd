@@ -1,5 +1,6 @@
 import logging
 from collections import namedtuple
+from typing import Union
 from enum import Enum, unique
 
 from ._daemon import sd_notify
@@ -30,7 +31,7 @@ class Notification(Enum):
 
 def notify(
     notification: Notification,
-    value: int = None,
+    value: Union[str, int] = None,
     unset_environment: bool = False,
     return_exceptions: bool = True,
 ):
