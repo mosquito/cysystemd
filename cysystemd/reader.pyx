@@ -494,8 +494,9 @@ cdef class JournalReader:
                 elif operand == MatchOperation.AND:
                     result = sd_journal_add_conjunction(self.context)
                     check_error_code(result)
-
-                raise ValueError('Invalid operation')
+                    
+                else:
+                    raise ValueError('Invalid operation')
 
     def clear_filter(self):
         sd_journal_flush_matches(self.context)
