@@ -145,7 +145,7 @@ wheel_images:
 
 linux_wheel: wheel_images
 	docker run -it --rm \
-		-v $(shell pwd):/app/src:ro \
+		-v $(shell pwd):/app/src \
 		-v $(shell pwd)/dist:/app/dst \
 		--entrypoint /bin/bash \
 		cysystemd:manylinux \
