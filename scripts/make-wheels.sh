@@ -7,7 +7,6 @@ function build_wheel() {
 	/opt/python/$1/bin/pip wheel ${SRC} -f ${SRC} -w ${DST}
 }
 
-build_wheel cp35-cp35m
 build_wheel cp36-cp36m
 build_wheel cp37-cp37m
 build_wheel cp38-cp38
