@@ -489,11 +489,11 @@ cdef class JournalReader:
 
                 if operand == MatchOperation.OR:
                     result = sd_journal_add_disjunction(self.context)
-                    return check_error_code(result)
+                    check_error_code(result)
 
                 elif operand == MatchOperation.AND:
                     result = sd_journal_add_conjunction(self.context)
-                    return check_error_code(result)
+                    check_error_code(result)
 
                 raise ValueError('Invalid operation')
 
