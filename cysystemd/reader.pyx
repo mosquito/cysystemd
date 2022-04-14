@@ -313,11 +313,13 @@ cdef class JournalReader:
     def open_files(self, *file_names):
         file_names = tuple(map(_check_file_path, file_names))
 
-        cdef char **paths = <char **>PyMem_Malloc(len(file_names) * sizeof(char*))
+        cdef size_t n = len(file_names)
+        cdef char **paths = <char **>PyMem_Malloc((n + 1) * sizeof(char*))
 
         for i, s in enumerate(file_names):
             cstr = s.encode()
             paths[i] = cstr
+        paths[n] = <char *>0
 
         try:
             with self._lock(opening=True):
