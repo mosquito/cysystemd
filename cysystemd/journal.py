@@ -1,4 +1,5 @@
 import logging
+import re
 import traceback
 import uuid
 from enum import IntEnum, unique
@@ -71,6 +72,7 @@ def write(message, priority=Priority.INFO):
 
 
 class JournaldLogHandler(logging.Handler):
+    FIELD_BADCHAR_RE = re.compile(r'\W')
     LEVELS = {
         logging.CRITICAL: Priority.CRITICAL.value,
         logging.FATAL: Priority.PANIC.value,
@@ -167,6 +169,7 @@ class JournaldLogHandler(logging.Handler):
         args = data.pop("args", [])
         if isinstance(args, Mapping):
             for key, value in args.items():
+                key = self.FIELD_BADCHAR_RE.sub('_', key)
                 data["argument_%s" % key] = value
         else:
             for idx, item in enumerate(args):
