@@ -1,4 +1,4 @@
-SystemD wrapper in Cython
+systemd wrapper in Cython
 =========================
 
 .. image:: https://img.shields.io/pypi/v/cysystemd.svg
@@ -94,7 +94,7 @@ Logging handler for python logger
         logger.exception("Test Exception %s", 1)
 
 
-Systemd daemon notification
+systemd daemon notification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -112,7 +112,7 @@ Systemd daemon notification
     notify(Notification.STOPPING)
 
 
-Write message into Systemd journal
+Write message into systemd journal
 
 
 .. code-block:: python
@@ -194,7 +194,7 @@ Polling records
          print(record.data['MESSAGE'])
 
 
-JournalD open modes
+journald open modes
 ~~~~~~~~~~~~~~~~~~~
 
 * CURRENT_USER
@@ -212,7 +212,7 @@ JournalD open modes
    reader.open(JournalOpenMode.CURRENT_USER)
 
 
-JournalD entry
+journald entry
 ~~~~~~~~~~~~~~
 
 JournalEntry class has some special properties and methods:
@@ -228,7 +228,7 @@ JournalEntry class has some special properties and methods:
 * ``__getitem__(key)`` - shoutcut for ``entry.data[key]``
 
 
-JournalD reader
+journald reader
 ~~~~~~~~~~~~~~~
 
 JournalReader class has some special properties and methods:
