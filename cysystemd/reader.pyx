@@ -4,8 +4,8 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.stdint cimport uint8_t, uint32_t
 from cpython cimport dict
 
-from sd_journal cimport *
-from sd_id128 cimport sd_id128_t
+from .sd_journal cimport *
+from .sd_id128 cimport sd_id128_t
 
 import os
 import logging
@@ -496,7 +496,7 @@ cdef class JournalReader:
                 elif operand == MatchOperation.AND:
                     result = sd_journal_add_conjunction(self.context)
                     check_error_code(result)
-                    
+
                 else:
                     raise ValueError('Invalid operation')
 

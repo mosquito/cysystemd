@@ -1,4 +1,4 @@
-cimport sd_daemon
+from . cimport sd_daemon
 
 
 cpdef sd_notify(str line, unset_environment=False):

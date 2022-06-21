@@ -1,4 +1,4 @@
-from sd_id128 cimport sd_id128_t
+from .sd_id128 cimport sd_id128_t
 from libc.stdint cimport uint64_t
 
 
