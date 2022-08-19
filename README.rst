@@ -88,7 +88,7 @@ Logging handler for python logger
     logger.addHandler(journal.JournaldLogHandler())
 
     try:
-        log.info("Trying to do something")
+        logger.info("Trying to do something")
         raise Exception('foo')
     except:
         logger.exception("Test Exception %s", 1)
