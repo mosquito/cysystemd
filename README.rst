@@ -30,7 +30,8 @@ All packages available on
 Installation from binary wheels
 +++++++++++++++++++++++++++++++
 
-* wheels is now available for Python 3.6, 3.7, 3.8, 3.9 for `x86_64` and `arm64`
+* wheels is now available for Python 3.7, 3.8, 3.9, 3.10, 3.11
+  for `x86_64` and `arm64`
 
 .. code-block:: bash
 
@@ -40,7 +41,7 @@ Installation from binary wheels
 Installation from sources
 +++++++++++++++++++++++++
 
-You should install systemd headers
+You **must** install **systemd headers**
 
 For Debian/Ubuntu users:
 
