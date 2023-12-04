@@ -245,9 +245,7 @@ cdef class JournalEntry:
 
         self._data = self.__data
         self.__boot_uuid = UUID(bytes=self.__boot_id.bytes[:16])
-        date = datetime.utcfromtimestamp(self.get_realtime_sec())
-        date.replace(tzinfo=timezone.utc)
-        self.__date = date
+        self.__date = datetime.fromtimestamp(self.get_realtime_sec(), timezone.utc)
 
     @property
     def cursor(self):
