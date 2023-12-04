@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 from contextlib import contextmanager
 from errno import errorcode
-from enum import IntEnum
+from enum import IntEnum, IntFlag
 
 
 log = logging.getLogger(__name__)
@@ -135,7 +135,7 @@ def check_error_code(int code):
 
 
 
-class JournalOpenMode(IntEnum):
+class JournalOpenMode(IntFlag):
     LOCAL_ONLY = SD_JOURNAL_LOCAL_ONLY
     RUNTIME_ONLY = SD_JOURNAL_RUNTIME_ONLY
     SYSTEM = SD_JOURNAL_SYSTEM
