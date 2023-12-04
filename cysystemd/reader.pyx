@@ -265,8 +265,9 @@ cdef class JournalEntry:
     cpdef uint64_t get_monotonic_usec(self):
         return self.monotonic_usec
 
+    @property
     def boot_id(self):
-        return self.boot_id
+        return self.__boot_uuid
 
     @property
     def date(self):
