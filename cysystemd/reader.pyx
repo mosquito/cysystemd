@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 from contextlib import contextmanager
 from errno import errorcode
-from enum import IntEnum
+from enum import IntEnum, IntFlag
 
 
 log = logging.getLogger(__name__)
@@ -135,7 +135,7 @@ def check_error_code(int code):
 
 
 
-class JournalOpenMode(IntEnum):
+class JournalOpenMode(IntFlag):
     LOCAL_ONLY = SD_JOURNAL_LOCAL_ONLY
     RUNTIME_ONLY = SD_JOURNAL_RUNTIME_ONLY
     SYSTEM = SD_JOURNAL_SYSTEM
@@ -245,9 +245,7 @@ cdef class JournalEntry:
 
         self._data = self.__data
         self.__boot_uuid = UUID(bytes=self.__boot_id.bytes[:16])
-        date = datetime.utcfromtimestamp(self.get_realtime_sec())
-        date.replace(tzinfo=timezone.utc)
-        self.__date = date
+        self.__date = datetime.fromtimestamp(self.get_realtime_sec(), timezone.utc)
 
     @property
     def cursor(self):
@@ -267,8 +265,9 @@ cdef class JournalEntry:
     cpdef uint64_t get_monotonic_usec(self):
         return self.monotonic_usec
 
+    @property
     def boot_id(self):
-        return self.boot_id
+        return self.__boot_uuid
 
     @property
     def date(self):
