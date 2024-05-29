@@ -9,6 +9,7 @@ from .sd_id128 cimport sd_id128_t
 
 import os
 import logging
+import warnings
 from datetime import datetime, timezone
 from uuid import UUID
 from contextlib import contextmanager
@@ -140,7 +141,18 @@ class JournalOpenMode(IntFlag):
     RUNTIME_ONLY = SD_JOURNAL_RUNTIME_ONLY
     SYSTEM = SD_JOURNAL_SYSTEM
     CURRENT_USER = SD_JOURNAL_CURRENT_USER
-    SYSTEM_ONLY = SD_JOURNAL_SYSTEM_ONLY
+
+    @classmethod
+    def _missing_(cls, value):
+        if value == SD_JOURNAL_SYSTEM_ONLY:
+            warnings.warn(
+                "The JournalOpenMode.SYSTEM_ONLY is deprecated and the alias of "
+                "JournalOpenMode.SYSTEM in the systemd library.",
+                DeprecationWarning,
+                stacklevel=2
+            )
+            return cls.SYSTEM
+        raise ValueError(f"{value} is not a valid open mode")
 
 
 cdef enum READER_STATE:
@@ -313,7 +325,7 @@ cdef class JournalReader:
         file_names = tuple(map(_check_file_path, file_names))
 
         cdef size_t n = len(file_names)
-        cdef char **paths = <char **>PyMem_Malloc((n + 1) * sizeof(char*))
+        cdef const char **paths = <const char **>PyMem_Malloc((n + 1) * sizeof(char*))
 
         for i, s in enumerate(file_names):
             cstr = s.encode()
