@@ -1,7 +1,7 @@
 CUR_DIR = $(shell pwd)
 EPOCH = $(shell date +%s)
 
-all: rpm_centos7 deb_debian deb_ubuntu linux_wheel
+all: linux_wheel
 
 sdist:
 	python setup.py sdist

@@ -15,11 +15,11 @@ function build_wheel() {
 
 yum install -y systemd-devel
 
-build_wheel cp37-cp37m
 build_wheel cp38-cp38
 build_wheel cp39-cp39
 build_wheel cp310-cp310
 build_wheel cp311-cp311
+build_wheel cp312-cp312
 
 echo ${VERSION}*linux_${ARCH}
 
