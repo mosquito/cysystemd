@@ -1,12 +1,12 @@
 package_info = "systemd wrapper in Cython"
-version_info = (1, 6, 2)
+version_info = (1, 6, 3)
 
 
 author_info = (("Dmitry Orlov", "me@mosquito.su"),)
 
 author_email = ", ".join("{}".format(info[1]) for info in author_info)
 
-license = "Apache"
+license = "Apache 2.0"
 
 __version__ = ".".join(str(x) for x in version_info)
 __author__ = ", ".join("{} <{}>".format(*info) for info in author_info)
