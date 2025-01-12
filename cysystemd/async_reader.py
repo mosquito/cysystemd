@@ -36,12 +36,12 @@ class AsyncJournalReader(Base):
         async with self.__wait_lock:
             loop = self._loop
             reader = self.__reader
-            event = asyncio.Event()
+            future = loop.create_future()
 
-            loop.add_reader(reader.fd, event.set)
+            loop.add_reader(reader.fd, future.set_result, None)
 
             try:
-                await event.wait()
+                await future
             finally:
                 loop.remove_reader(reader.fd)
 
@@ -143,8 +143,10 @@ class AsyncJournalReader(Base):
         while True:
             event = await self.wait()
             if event == JournalEvent.APPEND:
-                async for record in self:
+                record = await self.next()
+                while record:
                     yield record
+                    record = await self.next()
             elif event == JournalEvent.INVALIDATE:
                 log.warning("Journal invalidated. Reopening...")
                 self.__reader = JournalReader()
