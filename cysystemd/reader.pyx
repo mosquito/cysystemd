@@ -264,18 +264,18 @@ cdef class JournalEntry:
     def cursor(self) -> bytes:
         return self.cursor
 
-    cpdef double get_realtime_sec(self) -> float:
+    cpdef double get_realtime_sec(self):
         cdef double result = self.realtime_usec / 1000000.
         return result
 
-    cpdef double get_monotonic_sec(self) -> float:
+    cpdef double get_monotonic_sec(self):
         cdef double result = self.monotonic_usec / 1000000.
         return self.monotonic_usec / 1000000.
 
-    cpdef uint64_t get_realtime_usec(self) -> int:
+    cpdef uint64_t get_realtime_usec(self):
         return self.realtime_usec
 
-    cpdef uint64_t get_monotonic_usec(self) -> int:
+    cpdef uint64_t get_monotonic_usec(self):
         return self.monotonic_usec
 
     @property
@@ -441,7 +441,7 @@ cdef class JournalReader:
         check_error_code(result)
         return True
 
-    cpdef wait(self, uint32_t timeout = WAIT_MAX_TIME) -> JournalEvent:
+    cpdef wait(self, uint32_t timeout = WAIT_MAX_TIME):
         cdef uint64_t timeout_usec = timeout * 1000000
         cdef int result
 
