@@ -4,48 +4,87 @@
 
 Python systemd wrapper using Cython.
 
-
 ## Installation
 
-All packages available on `github releases <https://github.com/mosquito/cysystemd/releases>`_.
+### Important: System Requirements
 
-### Installation from binary wheels
-
-* wheels is now available for Python 3.8, 3.9, 3.10, 3.11, 3.12
-  for `x86_64` and `arm64`
-
-```shell
-python3.10 -m pip install \
-  https://github.com/mosquito/cysystemd/releases/download/1.6.2/cysystemd-1.6.2-cp310-cp310-linux_x86_64.whl
-```
-
-### Installation from sources
-
-You **must** install **systemd headers**
+**You must install the systemd development headers (libsystemd) before installation!** Without these headers, the
+installation will fail.
 
 For Debian/Ubuntu users:
-
 ```shell
 apt install build-essential libsystemd-dev
 ```
 
-On older versions of Debian/Ubuntu, you might also need to install:
+On older versions of Debian/Ubuntu, you might also need:
 
 ```shell
 apt install libsystemd-daemon-dev libsystemd-journal-dev
 ```
 
-For CentOS/RHEL
-
+For CentOS/RHEL:
 ```shell
 yum install gcc systemd-devel
 ```
 
-And install it from pypi
+### Installation from PyPI
 
+Once the system dependencies are installed, you can install cysystemd:
 ```shell
 pip install cysystemd
 ```
+
+## Why binary wheels are no longer distributed
+
+While we previously distributed binary wheels, we've discontinued this practice due to systemd ABI compatibility issues
+across different Linux distributions. Here's why:
+
+* Different Linux distributions ship different versions of systemd with varying ABI
+  (Application Binary Interface)
+* Even though the systemd headers (`libsystemd-dev`) remain relatively stable, the underlying ABI can change
+  between systemd versions
+* A wheel built against one version of systemd may not work correctly on systems with different systemd versions
+* Attempts to distribute pre-built wheels resulted in runtime compatibility issues across different Linux distributions
+  and systemd versions
+
+For these reasons, it's safer and more reliable to build cysystemd from source on your target system, ensuring proper
+compatibility with your system's specific systemd version. This is why we recommend installing from source using the
+build dependencies specified above.
+
+Based on the changes in the diff, I'll help write a BREAKING CHANGES article detailing the significant changes in version 2.0.0:
+
+# BREAKING CHANGES in v2.0.0
+
+## AsyncJournalReader Changes
+1. Major refactoring of the AsyncJournalReader iterator implementation:
+   * Removed internal queue and threading-based implementation
+   * Now uses direct async iteration through journal events
+   * More reliable handling of journal invalidation events
+   * Simpler and more efficient implementation
+
+2. `wait()` method now returns `JournalEvent` instead of boolean
+   * Returns specific event type (`JournalEvent.APPEND`, `JournalEvent.INVALIDATE`, `JournalEvent.NOP`)
+   * Better error handling and event processing
+
+## Type Annotations
+* Added comprehensive type hints throughout the codebase
+* Added return type annotations for all public methods
+* Enhanced IDE support and code documentation
+
+## API Behavior Changes
+* `seek_tail()` now automatically calls `previous()` to ensure cursor is positioned correctly
+* Improved error handling and validation in various methods
+* More consistent return types across the API
+
+## Python Support
+* Added support for Python 3.13
+* Maintained support for Python 3.8-3.12
+
+## Dependency Changes
+* Requires latest libsystemd development headers
+* Binary wheels are no longer distributed (see "Why binary wheels are no longer distributed" above)
+
+Please ensure your code is updated to handle these changes when upgrading to version 2.0.0.
 
 ## Usage examples
 

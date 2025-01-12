@@ -20,6 +20,7 @@ build_wheel cp39-cp39
 build_wheel cp310-cp310
 build_wheel cp311-cp311
 build_wheel cp312-cp312
+build_wheel cp313-cp313
 
 echo ${VERSION}*linux_${ARCH}
 
