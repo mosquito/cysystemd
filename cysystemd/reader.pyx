@@ -1,7 +1,7 @@
 #cython: unraisable_tracebacks=True
 
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
-from libc.stdint cimport uint8_t, uint32_t
+from libc.stdint cimport uint8_t, uint32_t, uint64_t
 from cpython cimport dict
 
 from .sd_journal cimport *
