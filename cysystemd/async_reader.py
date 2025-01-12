@@ -36,12 +36,13 @@ class AsyncJournalReader(Base):
         async with self.__wait_lock:
             loop = self._loop
             reader = self.__reader
-            future = loop.create_future()
+            # Use asyncio.Event to handle multiple set calls without issues
+            event = asyncio.Event()
 
-            loop.add_reader(reader.fd, future.set_result, None)
+            loop.add_reader(reader.fd, event.set)
 
             try:
-                await future
+                await event.wait()
             finally:
                 loop.remove_reader(reader.fd)
 
