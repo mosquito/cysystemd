@@ -163,7 +163,7 @@ cdef enum READER_STATE:
     READER_NULL,
 
 
-cdef str _check_dir_path(object path) -> str:
+cdef str _check_dir_path(object path):
     path = str(path)
 
     if not os.path.exists(path):
@@ -185,7 +185,7 @@ cdef str _check_dir_path(object path) -> str:
     return path
 
 
-cdef str _check_file_path(object path) -> str:
+cdef str _check_file_path(object path):
     path = str(path)
 
     if not os.path.exists(path):
