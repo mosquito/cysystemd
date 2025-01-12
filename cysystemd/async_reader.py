@@ -9,7 +9,7 @@ from typing import Callable, TypeVar
 from uuid import UUID
 from weakref import finalize
 
-from .reader import JournalOpenMode, JournalReader, JournalEntry
+from .reader import JournalOpenMode, JournalReader, JournalEntry, JournalEvent
 
 
 A = TypeVar("A")
@@ -37,7 +37,7 @@ class AsyncJournalReader(Base):
         self.__wait_lock = asyncio.Lock()
         self.__iterator = None
 
-    async def wait(self):
+    async def wait(self) -> JournalEvent:
         async with self.__wait_lock:
             loop = self._loop
             reader = self.__reader
@@ -50,9 +50,7 @@ class AsyncJournalReader(Base):
             finally:
                 loop.remove_reader(reader.fd)
 
-            reader.process_events()
-
-        return True
+            return reader.process_events()
 
     def open(self, flags=JournalOpenMode.CURRENT_USER):
         self.__flags = flags

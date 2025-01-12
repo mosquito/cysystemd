@@ -260,7 +260,7 @@ Method `wait()` use epoll on journald file descriptor.
 import asyncio
 import json
 
-from cysystemd.reader import JournalOpenMode
+from cysystemd.reader import JournalOpenMode, JournalEvent
 from cysystemd.async_reader import AsyncJournalReader
 
 
@@ -269,15 +269,23 @@ async def main():
     await reader.open(JournalOpenMode.SYSTEM)
     await reader.seek_tail()
 
-    while await reader.wait():
-        async for record in reader:
-            print(
-                json.dumps(
-                    record.data,
-                    indent=1,
-                    sort_keys=True
+    while True:
+        event = await reader.wait()
+        if event == JournalEvent.APPEND:
+            async for record in reader:
+                print(
+                    json.dumps(
+                        record.data,
+                        indent=1,
+                        sort_keys=True
+                    )
                 )
-            )
+        elif event == JournalEvent.INVALIDATE:
+            # Journal files were rotated or removed have to recreate reader
+            reader = AsyncJournalReader()
+            await reader.open(JournalOpenMode.SYSTEM)
+            await reader.seek_head()
+
 
 if __name__ == '__main__':
     asyncio.run(main())
