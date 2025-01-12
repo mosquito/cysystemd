@@ -1,18 +1,14 @@
 import asyncio
 import logging
-import threading
-from collections import deque
 
 from collections.abc import AsyncIterator
 from functools import partial
 from typing import Callable, TypeVar
 from uuid import UUID
-from weakref import finalize
 
 from .reader import JournalOpenMode, JournalReader, JournalEntry, JournalEvent
 
 
-A = TypeVar("A")
 R = TypeVar("R")
 log = logging.getLogger("cysystemd.async_reader")
 
@@ -22,7 +18,7 @@ class Base:
         self._executor = executor
         self._loop = loop or asyncio.get_event_loop()
 
-    async def _exec(self, func: Callable[[A], R], *args, **kwargs) -> R:
+    async def _exec(self, func: Callable[..., R], *args, **kwargs) -> R:
         # noinspection PyTypeChecker
         return await self._loop.run_in_executor(
             self._executor, partial(func, *args, **kwargs)
@@ -35,7 +31,6 @@ class AsyncJournalReader(Base):
         self.__reader = JournalReader()
         self.__flags = None
         self.__wait_lock = asyncio.Lock()
-        self.__iterator = None
 
     async def wait(self) -> JournalEvent:
         async with self.__wait_lock:
@@ -144,80 +139,14 @@ class AsyncJournalReader(Base):
     def next(self, skip=0):
         return self._exec(self.__reader.next, skip)
 
-    def __aiter__(self) -> "AsyncReaderIterator":
-        if self.__iterator is not None:
-            self.__iterator.close()
-            self.__iterator = None
-
-        iterator = AsyncReaderIterator(
-            loop=self._loop, executor=self._executor, reader=self.__reader
-        )
-
-        finalize(self, iterator.close)
-
-        self.__iterator = iterator
-        return iterator
-
-
-class AsyncReaderIterator(Base, AsyncIterator):
-    __slots__ = "reader", "queue", "queue_full", "event", "lock", "closed"
-
-    QUEUE_SIZE = 2
-    WRITE_EVENT_WAIT_TIME = 0.1
-
-    def __init__(self, *, reader, loop, executor):
-        super().__init__(loop=loop, executor=executor)
-        self.reader = reader
-        self.lock = asyncio.Lock()
-        self.queue = deque()
-        self.read_event = asyncio.Event()
-        self.write_event = threading.Semaphore(self.QUEUE_SIZE)
-        self.close_event = threading.Event()
-
-        self._loop.create_task(self._exec(self._journal_reader))
-
-    def close(self):
-        self.close_event.set()
-        self.__set_read_event()
-
-    def __del__(self):
-        self.close()
-
-    def __set_read_event(self):
-        if self._loop.is_closed():
-            return
-
-        self._loop.call_soon_threadsafe(self.read_event.set)
-
-    def _journal_reader(self):
-        try:
-            for item in self.reader:
-                while not self.close_event.is_set():
-                    if self.write_event.acquire(
-                        timeout=self.WRITE_EVENT_WAIT_TIME
-                    ):
-                        break
-                else:
-                    return
-
-                self.queue.append(item)
-                self.__set_read_event()
-        finally:
-            self.close()
-
-    async def __anext__(self) -> JournalEntry:
-        async with self.lock:
-            if self.close_event.is_set() and len(self.queue) == 0:
-                raise StopAsyncIteration
-
-            while True:
-                try:
-                    item = self.queue.popleft()
-                except IndexError:
-                    await self.read_event.wait()
-                    self.read_event.clear()
-                    continue
-                else:
-                    self.write_event.release()
-
-                return item
+    async def __aiter__(self) -> AsyncIterator[JournalEntry]:
+        while True:
+            event = await self.wait()
+            if event == JournalEvent.APPEND:
+                async for record in self:
+                    yield record
+            elif event == JournalEvent.INVALIDATE:
+                log.warning("Journal invalidated. Reopening...")
+                self.__reader = JournalReader()
+                await self.open(JournalOpenMode.SYSTEM)
+                await self.seek_head()
