@@ -1,4 +1,4 @@
-from cpython.mem cimport PyMem_Malloc, PyMem_Free
+from cpython.mem cimport PyMem_Calloc, PyMem_Malloc, PyMem_Free
 from libc.string cimport memcpy
 from .sd_journal cimport sd_journal_sendv, prioritynames, CODE, iovec
 
@@ -45,7 +45,7 @@ cpdef _send(kwargs):
 
     cdef unsigned int count = len(items)
     cdef iovec* vec = <iovec *>PyMem_Malloc(count * sizeof(iovec))
-    cdef void** cstring_list = <void **>PyMem_Malloc(count * sizeof(void*))
+    cdef void** cstring_list = <void **>PyMem_Calloc(count, sizeof(void*))
 
     if not vec or not cstring_list:
         raise MemoryError()
@@ -65,6 +65,8 @@ cpdef _send(kwargs):
         return sd_journal_sendv(vec, count)
     finally:
         for i in range(count):
+            if cstring_list[i] is NULL:
+                continue
             PyMem_Free(cstring_list[i])
 
         PyMem_Free(cstring_list)

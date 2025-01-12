@@ -11,6 +11,7 @@ from weakref import finalize
 
 from .reader import JournalOpenMode, JournalReader, JournalEntry
 
+
 A = TypeVar("A")
 R = TypeVar("R")
 log = logging.getLogger("cysystemd.async_reader")
