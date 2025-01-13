@@ -4,48 +4,86 @@
 
 Python systemd wrapper using Cython.
 
-
 ## Installation
 
-All packages available on `github releases <https://github.com/mosquito/cysystemd/releases>`_.
+### About Binary Wheels Distribution
 
-### Installation from binary wheels
+Historically, `cysystemd` was not distributed via wheels due to systemd versioning challenges.
+While the `libsystemd` headers remain relatively stable, the ABI can vary between different OS versions and
+distributions.
+Previous attempts to distribute wheels resulted in compatibility issues across different Linux systems.
+Currently, we use the `manylinux_2_34` format for wheel distribution, which bundles the necessary shared objects
+(.so files) required for operation.
 
-* wheels is now available for Python 3.8, 3.9, 3.10, 3.11, 3.12
-  for `x86_64` and `arm64`
+This approach should provide compatibility with modern systemd installations.
 
-```shell
-python3.10 -m pip install \
-  https://github.com/mosquito/cysystemd/releases/download/1.6.2/cysystemd-1.6.2-cp310-cp310-linux_x86_64.whl
+**However, if you encounter any compatibility issues, we strongly recommend installing the package from
+source code instead.**
+
+```bash
+pip install --no-binary=:all: cysystemd
 ```
 
-### Installation from sources
+### Installation from PyPI
 
-You **must** install **systemd headers**
+Once the system dependencies are installed, you can install cysystemd:
+```shell
+pip install cysystemd
+```
+
+### Installation from Source
+
+**You must install the systemd development headers (libsystemd) before installation!** Without these headers, the
+installation will fail.
 
 For Debian/Ubuntu users:
-
 ```shell
 apt install build-essential libsystemd-dev
 ```
 
-On older versions of Debian/Ubuntu, you might also need to install:
+On older versions of Debian/Ubuntu, you might also need:
 
 ```shell
 apt install libsystemd-daemon-dev libsystemd-journal-dev
 ```
 
-For CentOS/RHEL
-
+For CentOS/RHEL:
 ```shell
 yum install gcc systemd-devel
 ```
 
-And install it from pypi
+# BREAKING CHANGES in v2.0.0
 
-```shell
-pip install cysystemd
-```
+## AsyncJournalReader Changes
+1. Major refactoring of the AsyncJournalReader iterator implementation:
+   * Removed internal queue and threading-based implementation
+   * Now uses direct async iteration through journal events
+   * More reliable handling of journal invalidation events
+   * Simpler and more efficient implementation
+
+2. `wait()` method now returns `JournalEvent` instead of boolean
+   * Returns specific event type (`JournalEvent.APPEND`, `JournalEvent.INVALIDATE`, `JournalEvent.NOP`)
+   * Better error handling and event processing
+
+## Type Annotations
+* Added comprehensive type hints throughout the codebase
+* Added return type annotations for all public methods
+* Enhanced IDE support and code documentation
+
+## API Behavior Changes
+* `seek_tail()` now automatically calls `previous()` to ensure cursor is positioned correctly
+* Improved error handling and validation in various methods
+* More consistent return types across the API
+
+## Python Support
+* Added support for Python 3.13
+* Maintained support for Python 3.8-3.12
+
+## Dependency Changes
+* Requires latest libsystemd development headers
+* Binary wheels are no longer distributed (see "Why binary wheels are no longer distributed" above)
+
+Please ensure your code is updated to handle these changes when upgrading to version 2.0.0.
 
 ## Usage examples
 
@@ -269,15 +307,8 @@ async def main():
     await reader.open(JournalOpenMode.SYSTEM)
     await reader.seek_tail()
 
-    while await reader.wait():
-        async for record in reader:
-            print(
-                json.dumps(
-                    record.data,
-                    indent=1,
-                    sort_keys=True
-                )
-            )
+    async for record in reader:
+        print(json.dumps(record.data, indent=1, sort_keys=True))
 
 if __name__ == '__main__':
     asyncio.run(main())

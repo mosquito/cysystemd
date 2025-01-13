@@ -1,4 +1,6 @@
 #cython: unraisable_tracebacks=True
+from pathlib import Path
+from typing import Iterator, Tuple, Union
 
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.stdint cimport uint8_t, uint32_t, uint64_t
@@ -67,48 +69,48 @@ cdef class Rule:
         self._operand = MatchOperation.AND
 
     @property
-    def expression(self):
+    def expression(self) -> bytes:
         return self._expression
 
     @property
-    def child(self):
+    def child(self) -> Rule:
         return self._child
 
     @child.setter
-    def child(self, Rule child):
+    def child(self, Rule child) -> None:
         self._child = child
 
     @property
-    def root(self):
+    def root(self) -> Rule:
         return self._root
 
     @root.setter
-    def root(self, Rule root):
+    def root(self, Rule root) -> None:
         self._root = root
 
     @property
-    def operand(self):
+    def operand(self) -> MatchOperation:
         return self._operand
 
     @operand.setter
-    def operand(self, uint8_t op):
+    def operand(self, uint8_t op) -> None:
         self._operand = MatchOperation(op)
 
-    def __and__(self, Rule other):
+    def __and__(self, Rule other) -> Rule:
         self.operand = MatchOperation.AND
         self.child = other
         other.root = self.root
 
         return other
 
-    def __or__(self, Rule other):
+    def __or__(self, Rule other) -> Rule:
         self.operand = MatchOperation.OR
         self.child = other
         other.root = self.root
 
         return other
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         ret = []
         for opcode, exp in self:
             ret.append("%r" % exp.decode())
@@ -116,7 +118,7 @@ cdef class Rule:
 
         return 'Rule(%r)' % ' '.join(ret[:-1])
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[MatchOperation, bytes]]:
         rule = self.root
 
         while rule is not None:
@@ -124,7 +126,7 @@ cdef class Rule:
             rule = rule.child
 
 
-def check_error_code(int code):
+def check_error_code(int code) -> int:
     if code >= 0:
         return code
 
@@ -143,7 +145,7 @@ class JournalOpenMode(IntFlag):
     CURRENT_USER = SD_JOURNAL_CURRENT_USER
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value) -> 'JournalOpenMode':
         if value == SD_JOURNAL_SYSTEM_ONLY:
             warnings.warn(
                 "The JournalOpenMode.SYSTEM_ONLY is deprecated and the alias of "
@@ -260,7 +262,7 @@ cdef class JournalEntry:
         self.__date = datetime.fromtimestamp(self.get_realtime_sec(), timezone.utc)
 
     @property
-    def cursor(self):
+    def cursor(self) -> bytes:
         return self.cursor
 
     cpdef double get_realtime_sec(self):
@@ -278,24 +280,24 @@ cdef class JournalEntry:
         return self.monotonic_usec
 
     @property
-    def boot_id(self):
+    def boot_id(self) -> UUID:
         return self.__boot_uuid
 
     @property
-    def date(self):
+    def date(self) -> datetime:
         return self.__date
 
     @property
-    def data(self):
+    def data(self) -> dict[str, str]:
         return self._data
 
     def __dealloc__(self):
         PyMem_Free(self.cursor)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<JournalEntry: %r>" % self.date
 
-    def __getitem__(self, str key):
+    def __getitem__(self, str key) -> str:
         return self._data[key]
 
 
@@ -308,20 +310,20 @@ cdef class JournalReader:
         self.state = READER_NULL
         self.flags = None
 
-    def open(self, flags=JournalOpenMode.CURRENT_USER):
+    def open(self, flags=JournalOpenMode.CURRENT_USER) -> int:
         self.flags = JournalOpenMode(int(flags))
 
         with self._lock(opening=True):
-            check_error_code(sd_journal_open(&self.context, self.flags.value))
+            return check_error_code(sd_journal_open(&self.context, self.flags.value))
 
-    def open_directory(self, path):
+    def open_directory(self, path) -> None:
         path = _check_dir_path(path)
 
         with self._lock(opening=True):
             cstr = path.encode()
             check_error_code(sd_journal_open_directory(&self.context, cstr, 0))
 
-    def open_files(self, *file_names):
+    def open_files(self, *file_names: Union[str, Path]) -> None:
         file_names = tuple(map(_check_file_path, file_names))
 
         cdef size_t n = len(file_names)
@@ -339,7 +341,7 @@ cdef class JournalReader:
             PyMem_Free(paths)
 
     @property
-    def data_threshold(self):
+    def data_threshold(self) -> int:
         cdef size_t result
         cdef int rcode
 
@@ -350,7 +352,7 @@ cdef class JournalReader:
         return result
 
     @data_threshold.setter
-    def data_threshold(self, size):
+    def data_threshold(self, size) -> None:
         cdef size_t sz = size
         cdef int result
 
@@ -360,19 +362,19 @@ cdef class JournalReader:
         check_error_code(result)
 
     @property
-    def closed(self):
+    def closed(self) -> bool:
         return self.state == READER_CLOSED
 
     @property
-    def locked(self):
+    def locked(self) -> bool:
         return self.state == READER_LOCKED
 
     @property
-    def idle(self):
+    def idle(self) -> bool:
         return self.state == READER_OPENED
 
     @contextmanager
-    def _lock(self, opening=False):
+    def _lock(self, opening=False) -> None:
         if self.closed:
             raise RuntimeError("Can't lock closed reader")
         elif self.locked:
@@ -387,7 +389,7 @@ cdef class JournalReader:
         finally:
             self.state = READER_OPENED
 
-    def seek_head(self):
+    def seek_head(self) -> bool:
         cdef int result
 
         with self._lock():
@@ -397,16 +399,18 @@ cdef class JournalReader:
 
         return True
 
-    def seek_tail(self):
+    def seek_tail(self) -> bool:
         cdef int result
 
         with self._lock():
             result = sd_journal_seek_tail(self.context)
 
         check_error_code(result)
+        # have to call previous to get the last entry, otherwise it will have an unknown cursor
+        self.previous()
         return True
 
-    def seek_monotonic_usec(self, boot_id: UUID, uint64_t usec):
+    def seek_monotonic_usec(self, boot_id: UUID, uint64_t usec) -> bool:
         cdef sd_id128_t cboot_id
         cdef int result
 
@@ -418,7 +422,7 @@ cdef class JournalReader:
         check_error_code(result)
         return True
 
-    def seek_realtime_usec(self, uint64_t usec):
+    def seek_realtime_usec(self, uint64_t usec) -> bool:
         cdef uint64_t cusec = usec
         cdef int result
 
@@ -428,7 +432,7 @@ cdef class JournalReader:
         check_error_code(result)
         return True
 
-    def seek_cursor(self, bytes cursor):
+    def seek_cursor(self, bytes cursor) -> bool:
         cdef char* ccursor = cursor
         cdef int result
 
@@ -448,10 +452,10 @@ cdef class JournalReader:
 
         return JournalEvent(check_error_code(result))
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[JournalEntry]:
         return iter(self.next, None)
 
-    def next(self, uint64_t skip=0):
+    def next(self, uint64_t skip=0) -> JournalEntry:
         cdef int result
 
         with self._lock():
@@ -463,7 +467,7 @@ cdef class JournalReader:
             if check_error_code(result) > 0:
                 return JournalEntry(self)
 
-    def skip_next(self, uint64_t skip):
+    def skip_next(self, uint64_t skip) -> int:
         cdef int result
 
         with self._lock():
@@ -471,7 +475,7 @@ cdef class JournalReader:
 
         return check_error_code(result)
 
-    def previous(self, uint64_t skip=0):
+    def previous(self, uint64_t skip=0) -> JournalEntry:
         cdef int result
 
         with self._lock():
@@ -483,7 +487,7 @@ cdef class JournalReader:
             if check_error_code(result) > 0:
                 return JournalEntry(self)
 
-    def skip_previous(self, uint64_t skip):
+    def skip_previous(self, uint64_t skip) -> int:
         cdef int result
 
         with self._lock():
@@ -491,7 +495,7 @@ cdef class JournalReader:
 
         return check_error_code(result)
 
-    def add_filter(self, Rule rule):
+    def add_filter(self, Rule rule) -> None:
         cdef int result
         cdef char* exp
 
@@ -511,10 +515,10 @@ cdef class JournalReader:
                 else:
                     raise ValueError('Invalid operation')
 
-    def clear_filter(self):
+    def clear_filter(self) -> None:
         sd_journal_flush_matches(self.context)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Reader[%s]: %s>" % (
             self.flags, 'closed' if self.closed else 'opened'
         )
@@ -523,23 +527,23 @@ cdef class JournalReader:
         sd_journal_close(self.context)
 
     @property
-    def fd(self):
+    def fd(self) -> int:
         return check_error_code(sd_journal_get_fd(self.context))
 
     @property
-    def events(self):
+    def events(self) -> Poll:
         return Poll(check_error_code(sd_journal_get_events(self.context)))
 
     @property
-    def timeout(self):
+    def timeout(self) -> int:
         cdef uint64_t timeout
         check_error_code(sd_journal_get_timeout(self.context, &timeout))
         return timeout
 
-    def process_events(self):
+    def process_events(self) -> JournalEvent:
         return JournalEvent(check_error_code(sd_journal_process(self.context)))
 
-    def get_catalog(self):
+    def get_catalog(self) -> Path:
         cdef int result
         cdef char* catalog
         cdef bytes bcatalog
@@ -550,9 +554,9 @@ cdef class JournalReader:
         bcatalog = catalog[:length]
         PyMem_Free(catalog)
 
-        return bcatalog
+        return Path(bcatalog.decode())
 
-    def get_catalog_for_message_id(self, message_id):
+    def get_catalog_for_message_id(self, message_id: UUID) -> Path:
         cdef int result
         cdef char* catalog
         cdef bytes bcatalog
@@ -567,4 +571,4 @@ cdef class JournalReader:
         bcatalog = catalog[:length]
         PyMem_Free(catalog)
 
-        return bcatalog
+        return Path(bcatalog.decode())
