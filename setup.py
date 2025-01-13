@@ -67,8 +67,6 @@ setup(
     url="http://github.com/mosquito/cysystemd",
     author=module.__author__,
     author_email=module.author_email,
-    provides=["systemd"],
-    build_requires=["cython"],
     keywords=["systemd", "python", "daemon", "sd_notify", "cython"],
     classifiers=[
         "Development Status :: 4 - Beta",

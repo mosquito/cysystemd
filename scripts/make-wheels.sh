@@ -9,7 +9,8 @@ ARCH=`/opt/python/cp311-cp311/bin/python -c 'import platform; print(platform.mac
 cd -
 
 function build_wheel() {
-  /opt/python/$1/bin/pip install -U Cython
+  /opt/python/$1/bin/pip install -U Cython setuptools wheel
+  (cd ${SRC} && /opt/python/$1/bin/python3 setup.py build)
 	/opt/python/$1/bin/pip wheel ${SRC} -f ${SRC} -w ${DST}
 }
 
