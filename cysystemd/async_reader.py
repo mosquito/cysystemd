@@ -141,11 +141,8 @@ class AsyncJournalReader(Base):
     async def next(self, skip=0) -> JournalEntry:
         return await self._exec(self._reader.next, skip)
 
-    async def on_invalidated(self) -> None:
-        log.warning("Journal invalidated. Reopening...")
-        self._reader = JournalReader()
-        await self.open(JournalOpenMode.SYSTEM)
-        await self.seek_head()
+    async def on_invalidate(self) -> None:
+        log.warning("Journal invalidated.")
 
     async def on_append(self) -> AsyncIterator[JournalEntry]:
         record = await self.next()
@@ -153,14 +150,21 @@ class AsyncJournalReader(Base):
             yield record
             record = await self.next()
 
+    async def on_nop(self) -> None:
+        log.debug("No operation.")
+
     async def __aiter__(self) -> AsyncIterator[JournalEntry]:
         async with self._iter_lock:
             loop = self._loop
             reader = self._reader
-
-            # Use asyncio.Event to handle multiple set calls without issues
             read_event = asyncio.Event()
             loop.add_reader(reader.fd, read_event.set)
+
+            callbacks = {
+                JournalEvent.APPEND: self.on_append,
+                JournalEvent.NOP: self.on_nop,
+                JournalEvent.INVALIDATE: self.on_invalidate
+            }
 
             async with self._wait_lock:
                 while True:
@@ -170,9 +174,15 @@ class AsyncJournalReader(Base):
                         read_event.clear()
 
                     event = reader.process_events()
+                    cb = callbacks.get(event)
+                    if not cb:
+                        log.warning(f"Unknown event: {event!r}")
+                        continue
 
-                    if event == JournalEvent.APPEND:
-                        async for record in self.on_append():
+                    result = cb()
+
+                    if asyncio.iscoroutine(result):
+                        await result
+                    else:
+                        async for record in result:
                             yield record
-                    elif event == JournalEvent.INVALIDATE:
-                        await self.on_invalidated()
