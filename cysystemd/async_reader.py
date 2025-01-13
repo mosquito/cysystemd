@@ -29,128 +29,150 @@ class Base:
 class AsyncJournalReader(Base):
     def __init__(self, executor=None, loop=None):
         super().__init__(loop=loop, executor=executor)
-        self.__reader = JournalReader()
-        self.__flags = None
-        self.__wait_lock = asyncio.Lock()
+        self._reader = JournalReader()
+        self._flags = None
+        self._wait_lock = asyncio.Lock()
+        self._iter_lock = asyncio.Lock()
 
     async def wait(self) -> JournalEvent:
-        async with self.__wait_lock:
+        """ Wait for journal events once """
+
+        async with self._wait_lock:
             loop = self._loop
-            reader = self.__reader
+            reader = self._reader
             # Use asyncio.Event to handle multiple set calls without issues
             event = asyncio.Event()
-
             loop.add_reader(reader.fd, event.set)
-
             try:
                 await event.wait()
             finally:
                 loop.remove_reader(reader.fd)
-
             return reader.process_events()
 
-    def open(self, flags=JournalOpenMode.CURRENT_USER):
-        self.__flags = flags
-        return self._exec(self.__reader.open, flags=flags)
+    async def open(self, flags=JournalOpenMode.CURRENT_USER) -> int:
+        self._flags = flags
+        return await self._exec(self._reader.open, flags=flags)
 
-    def open_directory(self, path):
-        return self._exec(self.__reader.open_directory, path)
+    async def open_directory(self, path: Union[str, Path]) -> None:
+        return await self._exec(self._reader.open_directory, path)
 
-    def open_files(self, *file_names):
-        return self._exec(self.__reader.open_files, *file_names)
+    async def open_files(self, *file_names: Union[str, Path]) -> None:
+        return await self._exec(self._reader.open_files, *file_names)
 
     @property
     def data_threshold(self):
-        return self.__reader.data_threshold
+        return self._reader.data_threshold
 
     @data_threshold.setter
     def data_threshold(self, size):
-        self.__reader.data_threshold = size
+        self._reader.data_threshold = size
 
     @property
     def closed(self):
-        return self.__reader.closed
+        return self._reader.closed
 
     @property
     def locked(self):
-        return self.__reader.locked
+        return self._reader.locked
 
     @property
     def idle(self):
-        return self.__reader.idle
+        return self._reader.idle
 
-    def seek_head(self):
-        return self._exec(self.__reader.seek_head)
+    async def seek_head(self) -> bool:
+        return await self._exec(self._reader.seek_head)
 
     def __repr__(self):
         return "<%s[%s]: %s>" % (
             self.__class__.__name__,
-            self.__flags,
+            self._flags,
             "closed" if self.closed else "opened",
         )
 
     @property
     def fd(self):
-        return self.__reader.fd
+        return self._reader.fd
 
     @property
     def events(self):
-        return self.__reader.events
+        return self._reader.events
 
     @property
     def timeout(self):
-        return self.__reader.timeout
+        return self._reader.timeout
 
-    def get_catalog(self):
-        return self._exec(self.__reader.get_catalog)
+    async def get_catalog(self) -> Path:
+        return await self._exec(self._reader.get_catalog)
 
-    def get_catalog_for_message_id(self, message_id):
-        return self._exec(
-            self.__reader.get_catalog_for_message_id, message_id
+    async def get_catalog_for_message_id(self, message_id: UUID):
+        return await self._exec(
+            self._reader.get_catalog_for_message_id, message_id
         )
 
-    def seek_tail(self):
-        return self._exec(self.__reader.seek_tail)
+    async def seek_tail(self) -> bool:
+        return await self._exec(self._reader.seek_tail)
 
-    def seek_monotonic_usec(self, boot_id: UUID, usec):
-        return self._exec(
-            self.__reader.seek_monotonic_usec, boot_id, usec
+    async def seek_monotonic_usec(self, boot_id: UUID, usec: int) -> bool:
+        return await self._exec(
+            self._reader.seek_monotonic_usec, boot_id, usec
         )
 
-    def seek_realtime_usec(self, usec):
-        return self._exec(self.__reader.seek_realtime_usec, usec)
+    async def seek_realtime_usec(self, usec: int) -> bool:
+        return await self._exec(self._reader.seek_realtime_usec, usec)
 
-    def seek_cursor(self, cursor):
-        return self._exec(self.__reader.seek_cursor, cursor)
+    async def seek_cursor(self, cursor: bytes) -> int:
+        return await self._exec(self._reader.seek_cursor, cursor)
 
-    def skip_next(self, skip):
-        return self._exec(self.__reader.skip_next, skip)
+    async def skip_next(self, skip: int) -> int:
+        return await self._exec(self._reader.skip_next, skip)
 
-    def previous(self, skip=0):
-        return self._exec(self.__reader.previous, skip)
+    async def previous(self, skip: int = 0) -> JournalEntry:
+        return await self._exec(self._reader.previous, skip)
 
-    def skip_previous(self, skip):
-        return self._exec(self.__reader.skip_previous, skip)
+    async def skip_previous(self, skip: int) -> int:
+        return await self._exec(self._reader.skip_previous, skip)
 
-    def add_filter(self, rule):
-        return self._exec(self.__reader.add_filter, rule)
+    async def add_filter(self, rule) -> None:
+        return await self._exec(self._reader.add_filter, rule)
 
-    def clear_filter(self):
-        return self._exec(self.__reader.clear_filter)
+    async def clear_filter(self) -> None:
+        return await self._exec(self._reader.clear_filter)
 
-    def next(self, skip=0):
-        return self._exec(self.__reader.next, skip)
+    async def next(self, skip=0) -> JournalEntry:
+        return await self._exec(self._reader.next, skip)
+
+    async def on_invalidated(self) -> None:
+        log.warning("Journal invalidated. Reopening...")
+        self._reader = JournalReader()
+        await self.open(JournalOpenMode.SYSTEM)
+        await self.seek_head()
+
+    async def on_append(self) -> AsyncIterator[JournalEntry]:
+        record = await self.next()
+        while record:
+            yield record
+            record = await self.next()
 
     async def __aiter__(self) -> AsyncIterator[JournalEntry]:
-        while True:
-            event = await self.wait()
-            if event == JournalEvent.APPEND:
-                record = await self.next()
-                while record:
-                    yield record
-                    record = await self.next()
-            elif event == JournalEvent.INVALIDATE:
-                log.warning("Journal invalidated. Reopening...")
-                self.__reader = JournalReader()
-                await self.open(JournalOpenMode.SYSTEM)
-                await self.seek_head()
+        async with self._iter_lock:
+            loop = self._loop
+            reader = self._reader
+
+            # Use asyncio.Event to handle multiple set calls without issues
+            read_event = asyncio.Event()
+            loop.add_reader(reader.fd, read_event.set)
+
+            async with self._wait_lock:
+                while True:
+                    try:
+                        await read_event.wait()
+                    finally:
+                        read_event.clear()
+
+                    event = reader.process_events()
+
+                    if event == JournalEvent.APPEND:
+                        async for record in self.on_append():
+                            yield record
+                    elif event == JournalEvent.INVALIDATE:
+                        await self.on_invalidated()
