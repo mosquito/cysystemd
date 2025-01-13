@@ -6,7 +6,32 @@ Python systemd wrapper using Cython.
 
 ## Installation
 
-### Important: System Requirements
+### About Binary Wheels Distribution
+
+Historically, `cysystemd` was not distributed via wheels due to systemd versioning challenges.
+While the `libsystemd` headers remain relatively stable, the ABI can vary between different OS versions and
+distributions.
+Previous attempts to distribute wheels resulted in compatibility issues across different Linux systems.
+Currently, we use the `manylinux_2_34` format for wheel distribution, which bundles the necessary shared objects
+(.so files) required for operation.
+
+This approach should provide compatibility with modern systemd installations.
+
+**However, if you encounter any compatibility issues, we strongly recommend installing the package from
+source code instead.**
+
+```bash
+pip install --no-binary=:all: cysystemd
+```
+
+### Installation from PyPI
+
+Once the system dependencies are installed, you can install cysystemd:
+```shell
+pip install cysystemd
+```
+
+### Installation from Source
 
 **You must install the systemd development headers (libsystemd) before installation!** Without these headers, the
 installation will fail.
@@ -26,32 +51,6 @@ For CentOS/RHEL:
 ```shell
 yum install gcc systemd-devel
 ```
-
-### Installation from PyPI
-
-Once the system dependencies are installed, you can install cysystemd:
-```shell
-pip install cysystemd
-```
-
-## Why binary wheels are no longer distributed
-
-While we previously distributed binary wheels, we've discontinued this practice due to systemd ABI compatibility issues
-across different Linux distributions. Here's why:
-
-* Different Linux distributions ship different versions of systemd with varying ABI
-  (Application Binary Interface)
-* Even though the systemd headers (`libsystemd-dev`) remain relatively stable, the underlying ABI can change
-  between systemd versions
-* A wheel built against one version of systemd may not work correctly on systems with different systemd versions
-* Attempts to distribute pre-built wheels resulted in runtime compatibility issues across different Linux distributions
-  and systemd versions
-
-For these reasons, it's safer and more reliable to build cysystemd from source on your target system, ensuring proper
-compatibility with your system's specific systemd version. This is why we recommend installing from source using the
-build dependencies specified above.
-
-Based on the changes in the diff, I'll help write a BREAKING CHANGES article detailing the significant changes in version 2.0.0:
 
 # BREAKING CHANGES in v2.0.0
 

@@ -12,7 +12,7 @@ linux_wheel:
 		-v $(shell pwd):/app/src \
 		-v $(shell pwd)/dist:/app/dst \
 		--entrypoint /bin/bash \
-		quay.io/pypa/manylinux_2_28_x86_64 \
+		quay.io/pypa/manylinux_2_34_x86_64 \
 		/app/src/scripts/make-wheels.sh
 
 	docker run -it --rm \
@@ -20,5 +20,5 @@ linux_wheel:
 		-v $(shell pwd)/dist:/app/dst \
 		--platform=linux/arm64 \
 		--entrypoint /bin/bash \
-		quay.io/pypa/manylinux_2_28_aarch64 \
+		quay.io/pypa/manylinux_2_34_aarch64 \
 		/app/src/scripts/make-wheels.sh
