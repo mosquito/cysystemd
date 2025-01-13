@@ -1,5 +1,6 @@
 #cython: unraisable_tracebacks=True
-from typing import Iterator, Tuple
+from pathlib import Path
+from typing import Iterator, Tuple, Union
 
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from libc.stdint cimport uint8_t, uint32_t, uint64_t
@@ -322,7 +323,7 @@ cdef class JournalReader:
             cstr = path.encode()
             check_error_code(sd_journal_open_directory(&self.context, cstr, 0))
 
-    def open_files(self, *file_names) -> None:
+    def open_files(self, *file_names: Union[str, Path]) -> None:
         file_names = tuple(map(_check_file_path, file_names))
 
         cdef size_t n = len(file_names)
@@ -542,7 +543,7 @@ cdef class JournalReader:
     def process_events(self) -> JournalEvent:
         return JournalEvent(check_error_code(sd_journal_process(self.context)))
 
-    def get_catalog(self) -> bytes:
+    def get_catalog(self) -> Path:
         cdef int result
         cdef char* catalog
         cdef bytes bcatalog
@@ -553,9 +554,9 @@ cdef class JournalReader:
         bcatalog = catalog[:length]
         PyMem_Free(catalog)
 
-        return bcatalog
+        return Path(bcatalog.decode())
 
-    def get_catalog_for_message_id(self, message_id) -> bytes:
+    def get_catalog_for_message_id(self, message_id: UUID) -> Path:
         cdef int result
         cdef char* catalog
         cdef bytes bcatalog
@@ -570,4 +571,4 @@ cdef class JournalReader:
         bcatalog = catalog[:length]
         PyMem_Free(catalog)
 
-        return bcatalog
+        return Path(bcatalog.decode())

@@ -3,7 +3,8 @@ import logging
 
 from collections.abc import AsyncIterator
 from functools import partial
-from typing import Callable, TypeVar
+from pathlib import Path
+from typing import Callable, TypeVar, Union
 from uuid import UUID
 
 from .reader import JournalOpenMode, JournalReader, JournalEntry, JournalEvent
