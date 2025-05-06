@@ -67,8 +67,6 @@ def notify(
         state.constant if state.constant is not None else state.type(value),
     )
 
-    log.debug("Send %r into systemd", line)
-
     try:
         return sd_notify(line, unset_environment)
     except Exception as e:
