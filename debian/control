@@ -1,0 +1,33 @@
+Source: cysystemd
+Maintainer: Matthias Urlichs <matthias@urlichs.de>
+Section: python
+Priority: optional
+Build-Depends: dh-python, python3-setuptools, python3-all-dev, debhelper (>= 12)
+Standards-Version: 4.7.0
+Homepage: http://github.com/mosquito/cysystemd
+
+Package: python3-cysystemd
+Architecture: any
+Depends: ${misc:Depends}, ${python3:Depends}, ${shlibs:Depends}
+Description: systemd wrapper in Cython
+ ![pypi version](https://img.shields.io/pypi/v/cysystemd.svg) ![](https://img.shields.io/pypi/pyversions/cysystemd.svg)  ![License](https://img.shields.io/pypi/l/cysystemd.svg)
+ .
+ # systemd wrapper in Cython
+ .
+ Python systemd wrapper using Cython.
+ .
+ ## Installation
+ .
+ ### About Binary Wheels Distribution
+ .
+ Historically, `cysystemd` was not distributed via wheels due to systemd versioning challenges.
+ While the `libsystemd` headers remain relatively stable, the ABI can vary between different OS versions and
+ distributions.
+ Previous attempts to distribute wheels resulted in compatibility issues across different Linux systems.
+ Currently, we use the `manylinux_2_34` format for wheel distribution, which bundles the necessary shared objects
+ (.so files) required for operation.
+ .
+ This approach should provide compatibility with modern systemd installations.
+ .
+ **However, if you encounter any compatibility issues, we strongly recommend installing the package from
+
