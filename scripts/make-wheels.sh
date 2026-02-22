@@ -4,6 +4,7 @@ SRC=/app/src
 DST=/app/dst
 
 cd ${SRC}
+/opt/python/cp311-cp311/bin/pip install setuptools
 VERSION=`/opt/python/cp311-cp311/bin/python setup.py --version`
 ARCH=`/opt/python/cp311-cp311/bin/python -c 'import platform; print(platform.machine())'`
 cd -
@@ -22,6 +23,7 @@ build_wheel cp310-cp310
 build_wheel cp311-cp311
 build_wheel cp312-cp312
 build_wheel cp313-cp313
+build_wheel cp314-cp314
 
 echo ${VERSION}*linux_${ARCH}
 
