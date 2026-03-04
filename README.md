@@ -24,6 +24,11 @@ source code instead.**
 pip install --no-binary=:all: cysystemd
 ```
 
+### Installation via Debian packages
+
+Pre-built `.deb` packages are available for Debian/Ubuntu in the
+[GitHub Releases](https://github.com/mosquito/cysystemd/releases) page.
+
 ### Installation from PyPI
 
 Once the system dependencies are installed, you can install cysystemd:
